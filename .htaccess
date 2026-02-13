@@ -2,28 +2,23 @@
   RewriteEngine On
   RewriteBase /
 
-  # 1. Paksa file .tsx dan .ts untuk selalu dikirim sebagai JavaScript
-  # Ini mengatasi error MIME type "text/html"
-  <FilesMatch "\.(tsx|ts)$">
+  # 1. Pastikan file script tidak dianggap HTML
+  AddType application/javascript .js .tsx .ts
+  
+  <FilesMatch "\.(tsx|ts|js)$">
     Header set Content-Type "application/javascript"
-    ForceType application/javascript
   </FilesMatch>
 
-  AddType application/javascript .tsx
-  AddType application/javascript .ts
-
-  # 2. Jangan ganggu folder api
+  # 2. Lewati API folder
   RewriteRule ^api/ - [L]
 
   # 3. SPA Routing
-  # Jika file atau direktori fisik ada, langsung sajikan
+  # Jika file ada, sajikan langsung
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-
-  # JANGAN redirect file asset/script ke index.html
-  RewriteCond %{REQUEST_URI} !\.(tsx|ts|js|css|png|jpg|webp|svg|json|ico|woff2)$ [NC]
-  # Sisanya, arahkan ke index.html untuk penanganan Client-side routing
+  
+  # Jika bukan file, arahkan ke index.html
+  # Hindari file asset (gambar, font, css) diarahkan ke index.html
+  RewriteCond %{REQUEST_URI} !\.(css|js|tsx|ts|png|jpg|jpeg|gif|svg|ico|woff2|json)$ [NC]
   RewriteRule . index.html [L]
 </IfModule>

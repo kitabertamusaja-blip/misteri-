@@ -24,10 +24,9 @@
 }
 </script>
 
-    <!-- Babel Standalone untuk menjalankan TSX di browser tanpa build step -->
+    <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script>
-      // Menggunakan 'Babel' (kapital) sesuai library standalone
       if (window.Babel) {
         Babel.registerPreset('my-preset', {
           presets: [
@@ -38,8 +37,8 @@
       }
     </script>
     
-    <!-- Menggunakan path absolut /index.tsx agar browser tidak bingung saat di sub-page -->
-    <script type="text/babel" data-presets="my-preset" data-type="module" src="/index.tsx"></script>
+    <!-- Menggunakan path relatif 'index.tsx' agar bekerja di root maupun subfolder -->
+    <script type="text/babel" data-presets="my-preset" data-type="module" src="index.tsx"></script>
 </head>
 <body class="bg-mystic-gradient min-h-screen pb-20 md:pb-0 text-white overflow-x-hidden">
     <div id="root"></div>
