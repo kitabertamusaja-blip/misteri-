@@ -1,38 +1,47 @@
-<?php
-include_once 'db.php';
 
-// Ambil data JSON dari body request
-$data = json_decode(file_get_contents("php://input"));
+<?php
+require_once 'db.php';
+
+if (!$conn) {
+    echo json_encode(["status" => "error", "message" => "Database tidak terhubung"]);
+    exit();
+}
+
+// Tangkap data JSON
+$json = file_get_contents("php://input");
+$data = json_decode($json);
 
 if (!$data || !isset($data->judul)) {
-    http_response_code(400);
-    echo json_encode(["message" => "Data tidak lengkap"]);
+    echo json_encode([
+        "status" => "error", 
+        "message" => "Data tidak lengkap atau format salah",
+        "received" => $json
+    ]);
     exit();
 }
 
 try {
-    // Buat slug otomatis dari judul
+    // Sanitasi slug
     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $data->judul)));
     
-    // Insert data (Gunakan INSERT IGNORE agar tidak error jika judul/slug sudah ada)
-    $query = "INSERT IGNORE INTO mimpi (slug, judul, kategori, ringkasan, tafsir_positif, tafsir_negatif, angka, view_count) 
-              VALUES (:slug, :judul, :kategori, :ringkasan, :tafsir_positif, :tafsir_negatif, :angka, 1)";
+    // Gunakan query yang mendukung update jika judul/slug sudah ada
+    $query = "INSERT INTO mimpi (slug, judul, kategori, ringkasan, tafsir_positif, tafsir_negatif, angka, view_count) 
+              VALUES (:slug, :judul, :kategori, :ringkasan, :tafsir_positif, :tafsir_negatif, :angka, 1)
+              ON DUPLICATE KEY UPDATE view_count = view_count + 1";
     
     $stmt = $conn->prepare($query);
+    $stmt->execute([
+        ':slug' => $slug,
+        ':judul' => $data->judul,
+        ':kategori' => $data->kategori,
+        ':ringkasan' => $data->ringkasan,
+        ':tafsir_positif' => $data->tafsir_positif,
+        ':tafsir_negatif' => $data->tafsir_negatif,
+        ':angka' => $data->angka
+    ]);
     
-    $stmt->bindParam(':slug', $slug);
-    $stmt->bindParam(':judul', $data->judul);
-    $stmt->bindParam(':kategori', $data->kategori);
-    $stmt->bindParam(':ringkasan', $data->ringkasan);
-    $stmt->bindParam(':tafsir_positif', $data->tafsir_positif);
-    $stmt->bindParam(':tafsir_negatif', $data->tafsir_negatif);
-    $stmt->bindParam(':angka', $data->angka);
-    
-    $stmt->execute();
-    
-    echo json_encode(["status" => "success", "message" => "Data berhasil disinkronkan"]);
+    echo json_encode(["status" => "success", "message" => "Data berhasil disinkronisasi"]);
 } catch(Exception $e) {
-    http_response_code(500);
-    echo json_encode(["error" => $e->getMessage()]);
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 ?>

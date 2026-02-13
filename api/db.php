@@ -1,35 +1,50 @@
 
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-header("Content-Type: application/json; charset=UTF-8");
-
-// Aktifkan error reporting untuk debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
+// Izinkan akses dari mana saja
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Max-Age: 86400'); // cache selama 1 hari
 }
 
-// DETAIL DATABASE
+// Header untuk pre-flight OPTIONS
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+    
+    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+        header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+
+    exit(0);
+}
+
+header("Content-Type: application/json; charset=UTF-8");
+
+// KONFIGURASI DATABASE
 $host = "localhost";
 $db_name = "fach6357_misteri";
 $username = "fach6357_mridla";
 $password = "@@22Hari11Bulan";
 
 try {
-    $conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $conn->exec("set names utf8mb4"); // Menggunakan utf8mb4 agar mendukung emoji zodiak
-} catch(PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        "error" => "Koneksi database gagal",
-        "debug_message" => $e->getMessage()
-    ]);
-    exit();
+    $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+    
+    $conn = new PDO($dsn, $username, $password, $options);
+} catch (PDOException $e) {
+    if (basename($_SERVER['PHP_SELF']) == 'db.php') {
+        http_response_code(500);
+        echo json_encode([
+            "status" => "error",
+            "message" => "Koneksi database gagal",
+            "debug" => $e->getMessage()
+        ]);
+        exit();
+    }
+    $conn = null;
 }
 ?>

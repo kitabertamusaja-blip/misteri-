@@ -1,5 +1,5 @@
 
-// Menggunakan domain baru sesuai link yang diberikan user
+// Gunakan URL absolut untuk memastikan konsistensi
 const PROD_API_URL = 'https://www.misteri.faciltrix.com/api'; 
 
 const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -8,28 +8,49 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 
 export const fetchMimpiFromDB = async (query: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/search.php?q=${encodeURIComponent(query)}`);
+    const url = `${API_BASE_URL}/search.php?q=${encodeURIComponent(query)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      headers: { 'Accept': 'application/json' }
+    });
+    
     if (!response.ok) return [];
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Database connectivity issue:", error);
+    console.error("Database search network error:", error);
     return [];
   }
 };
 
 export const saveMimpiToDB = async (dreamData: any) => {
+  const url = `${API_BASE_URL}/save-mimpi.php`;
   try {
-    const response = await fetch(`${API_BASE_URL}/save-mimpi.php`, {
+    console.log("Syncing with DB:", url);
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify(dreamData)
     });
-    // Kita tidak perlu menunggu response untuk UX yang lebih cepat, 
-    // tapi kita log untuk memantau keberhasilan sinkronisasi di background.
-    const result = await response.json();
-    console.log("DB Sync Result:", result);
+    
+    const text = await response.text();
+    try {
+        const result = JSON.parse(text);
+        if (result.status === "success") {
+            console.log("✅ DB Sync Success:", result.message);
+        } else {
+            console.error("❌ DB Sync API Error:", result.message);
+        }
+    } catch (e) {
+        console.error("❌ DB Sync Response bukan JSON:", text);
+    }
   } catch (error) {
-    console.error("Database save failed:", error);
+    console.error("❌ Network error during DB save (Failed to Fetch):", error);
+    console.log("Tips: Pastikan SSL di domain faciltrix.com aktif dan tidak ada blokir firewall di hosting.");
   }
 };

@@ -8,7 +8,7 @@ import {
   Zap, Wallet, Briefcase, HeartPulse
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { saveMimpiToDB } from './services/api';
+import { saveMimpiToDB, fetchMimpiFromDB } from './services/api';
 
 /** --- CONSTANTS & MOCK DATA --- **/
 const Page = {
@@ -32,13 +32,12 @@ const ZODIAC_LIST = [
   { n: 'Aquarius', t: '20 Jan - 18 Feb', i: '♒' }, { n: 'Pisces', t: '19 Feb - 20 Mar', i: '♓' }
 ];
 
-// Initialize Google GenAI with API Key from process.env
+// Initialize Google GenAI
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /** --- CONTEXT --- **/
 const AppContext = createContext<any>(undefined);
 
-// Fix: Make children optional to avoid "Property 'children' is missing" errors in some TypeScript configurations
 const AppProvider = ({ children }: { children?: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(Page.HOME);
   const [favorites, setFavorites] = useState<number[]>([]);
@@ -78,6 +77,7 @@ const AppProvider = ({ children }: { children?: ReactNode }) => {
     }}>{children}</AppContext.Provider>
   );
 };
+
 const useAppContext = () => useContext(AppContext);
 
 /** --- SHARED UI COMPONENTS --- **/
@@ -405,7 +405,19 @@ const SearchPage = () => {
     if (!q.trim()) return;
     setIsLoading(true);
     
-    // Logic: Cari di database atau generate baru via Gemini
+    // LANGKAH 1: Cari di Database MySQL terlebih dahulu
+    console.log("Mencari di database lokal...");
+    const dbResults = await fetchMimpiFromDB(q);
+    
+    if (dbResults && dbResults.length > 0) {
+        console.log("Data ditemukan di database!");
+        setResults(dbResults);
+        setIsLoading(false);
+        return;
+    }
+
+    // LANGKAH 2: Jika tidak ada di DB, baru tanya Gemini AI
+    console.log("Data tidak ada di DB, memanggil Gemini AI...");
     const res = await (async (prompt) => {
       try {
         const response = await ai.models.generateContent({
@@ -429,7 +441,7 @@ const SearchPage = () => {
         });
         const dreamData = JSON.parse(response.text || '{}');
         
-        // CRITICAL: Simpan ke MySQL setelah generate
+        // Simpan hasil generate AI ke MySQL untuk pencarian berikutnya
         if (dreamData && dreamData.judul) {
            await saveMimpiToDB(dreamData);
         }
@@ -468,7 +480,7 @@ const SearchPage = () => {
           <SectionHeader title="Analisis Takdir" subtitle={`${results.length} Makna Ditemukan`} />
           {results.map(r => (
             <div 
-              key={r.id} 
+              key={r.id || r.slug} 
               onClick={() => navigate(Page.DETAIL, r)} 
               className="bg-[#1A1A2E] p-7 rounded-[2.5rem] border border-white/5 flex items-center gap-6 shadow-xl active:scale-95 transition-all"
             >
@@ -646,7 +658,6 @@ const AppContent = () => {
   );
 };
 
-// Fix: Remove React.FC to avoid issues where FunctionComponent requires children in certain React/TS versions
 const App = () => (
   <AppProvider>
     <AppContent />
