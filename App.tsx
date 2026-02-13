@@ -7,6 +7,7 @@ import { AppProvider, useAppContext } from './context/AppContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ICONS, MOCK_DREAMS, ZODIAC_LIST, TEST_LIST } from './constants';
 import { getDynamicDreamInterpretation } from './services/geminiService';
+import { fetchMimpiFromDB, saveMimpiToDB } from './services/api';
 
 // Import Pages
 import Home from './pages/Home';
@@ -31,13 +32,47 @@ const AppContent: React.FC = () => {
     if (!searchQuery.trim()) return;
     
     setIsLoading(true);
-    const result = await getDynamicDreamInterpretation(searchQuery);
-    if (result) {
-        setSelectedDream({ ...result, id: Date.now(), slug: 'dynamic-' + Date.now(), view_count: 1 });
-        setShowInterstitial(true);
-        setCurrentPage(Page.DETAIL);
+
+    try {
+      // 1. Cek MySQL dulu via API
+      // fetchMimpiFromDB sekarang mengembalikan [] jika gagal (bukan null)
+      const dbResult = await fetchMimpiFromDB(searchQuery);
+      
+      if (dbResult && dbResult.length > 0) {
+          // Jika ada di DB, gunakan data DB (Hemat kuota AI)
+          setSelectedDream(dbResult[0]);
+          setCurrentPage(Page.DETAIL);
+          setShowInterstitial(true);
+      } else {
+          // 2. Jika tidak ada di DB (atau fetch gagal), panggil Gemini AI
+          const aiResult = await getDynamicDreamInterpretation(searchQuery);
+          if (aiResult) {
+              const newDream = { 
+                ...aiResult, 
+                id: Date.now(), 
+                slug: 'dynamic-' + Date.now(), 
+                view_count: 1 
+              };
+              setSelectedDream(newDream);
+              
+              // 3. Simpan hasil AI ke MySQL secara background (jangan ditunggu/await)
+              saveMimpiToDB(aiResult).catch(err => console.error("Silently failed to sync AI result to DB:", err));
+              
+              setCurrentPage(Page.DETAIL);
+              setShowInterstitial(true);
+          }
+      }
+    } catch (error) {
+      console.error("Search logic error:", error);
+      // Fallback terakhir: Coba AI jika semuanya gagal
+      const aiResult = await getDynamicDreamInterpretation(searchQuery);
+      if (aiResult) {
+          setSelectedDream({ ...aiResult, id: Date.now(), slug: 'fallback-' + Date.now(), view_count: 1 });
+          setCurrentPage(Page.DETAIL);
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const navigateToDetail = (dream: any) => {
