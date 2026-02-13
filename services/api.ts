@@ -1,9 +1,7 @@
-
 // Path relatif '/api' bekerja karena folder 'api' berada di dalam 'public_html'
-// bersamaan dengan file index.html hasil build.
 const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost/misteri-api' // Sesuaikan jika Anda test lokal pakai XAMPP
-  : '/api'; 
+  ? 'http://localhost/misteri-api' 
+  : window.location.origin + '/api'; 
 
 export const fetchMimpiFromDB = async (query: string) => {
   try {

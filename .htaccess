@@ -2,14 +2,13 @@
   RewriteEngine On
   RewriteBase /
 
-  # Opsional: Paksa HTTPS (Hapus tanda # di bawah jika SSL sudah aktif di Rumahweb)
-  # RewriteCond %{HTTPS} off
-  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # Fix MIME Type untuk .tsx agar dikenali browser sebagai JS Module
+  AddType application/javascript .tsx
 
   # Jangan arahkan folder /api ke index.html
   RewriteRule ^api/ - [L]
   
-  # Arahkan semua request lain ke index.html (React Router)
+  # Arahkan semua request lain ke index.html (SPA Routing)
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
