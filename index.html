@@ -10,10 +10,11 @@
     <link rel="stylesheet" href="index.css">
     
     <script>
-      // Shim untuk mencegah error "process is not defined"
+      // Shim untuk simulasi environment variable di browser
+      // Masukkan API_KEY Gemini Anda di bawah ini
       window.process = { 
         env: { 
-          API_KEY: "" // Akan diisi secara internal oleh sistem jika tersedia
+          API_KEY: "AIzaSyCyu75E5KZvWtG4LFwrHGRKDEesryy0a4s" 
         } 
       };
     </script>
@@ -33,7 +34,7 @@
 }
 </script>
 
-    <!-- Babel Standalone -->
+    <!-- Babel Standalone untuk menjalankan TypeScript langsung di browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script>
       if (window.Babel) {
