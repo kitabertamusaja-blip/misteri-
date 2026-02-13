@@ -2,18 +2,22 @@
   RewriteEngine On
   RewriteBase /
 
-  # 1. Paksa MIME type agar browser mengenali .tsx sebagai JavaScript Module
+  # 1. Pastikan MIME type benar agar Babel bisa memproses file
   <FilesMatch "\.(tsx|ts)$">
     ForceType application/javascript
   </FilesMatch>
 
+  AddType application/javascript .tsx
+  AddType application/javascript .ts
+
   # 2. Jangan arahkan folder /api ke index.html
   RewriteRule ^api/ - [L]
   
-  # 3. SPA Routing: Hanya arahkan ke index.html jika yang diminta BUKAN file nyata
-  # Dan pastikan file asset (.js, .tsx, .css, .png, dsb) tidak kena rewrite jika tidak sengaja hilang
+  # 3. SPA Routing
+  # Hanya arahkan ke index.html jika yang diminta BUKAN file fisik nyata
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_URI} !\.(tsx|ts|js|css|png|jpg|webp|svg|json)$ [NC]
-  RewriteRule . /index.html [L]
+  # Jangan arahkan permintaan file asset ke index.html (mencegah error 'Unexpected token <')
+  RewriteCond %{REQUEST_URI} !\.(tsx|ts|js|css|png|jpg|webp|svg|json|ico)$ [NC]
+  RewriteRule . index.html [L]
 </IfModule>
