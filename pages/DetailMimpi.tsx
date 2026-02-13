@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ICONS, MOCK_DREAMS } from '../constants';
-import { Page } from '../types';
-import { useAppContext } from '../context/AppContext';
-import AdBanner from '../components/AdBanner';
+import { ICONS, MOCK_DREAMS } from '../constants.tsx';
+import { Page } from '../types.ts';
+import { useAppContext } from '../context/AppContext.tsx';
+import AdBanner from '../components/AdBanner.tsx';
 
 const DetailMimpi: React.FC = () => {
   const { selectedDream, setCurrentPage, setSelectedDream, setShowInterstitial, favorites, toggleFavorite } = useAppContext();
@@ -27,7 +26,7 @@ const DetailMimpi: React.FC = () => {
             onClick={() => setCurrentPage(Page.HOME)}
             className="flex items-center gap-2 text-gray-400 text-xs mb-4"
         >
-            <ICONS.Next size={16} className="rotate-180" /> Kembali ke Beranda
+            <ICONS.Next size={16} className="rotate-180" /> Kembali
         </button>
 
         <div className="space-y-4">
@@ -49,22 +48,22 @@ const DetailMimpi: React.FC = () => {
 
         <section className="space-y-4">
             <div className="bg-[#1A1A2E] p-6 rounded-2xl border border-white/5 shadow-inner">
-                <p className="text-gray-300 leading-relaxed italic border-l-4 border-[#7F5AF0] pl-4 text-lg">
+                <p className="text-gray-300 italic border-l-4 border-[#7F5AF0] pl-4 text-lg">
                     "{selectedDream.ringkasan}"
                 </p>
             </div>
             
             <div className="grid grid-cols-1 gap-4">
                 <div className="bg-green-500/5 border border-green-500/20 p-6 rounded-2xl space-y-3">
-                    <h4 className="text-green-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
-                        <ICONS.Star size={16} /> Sisi Terang (Positif)
+                    <h4 className="text-green-400 font-bold flex items-center gap-2 text-sm uppercase">
+                        <ICONS.Star size={16} /> Sisi Terang
                     </h4>
                     <p className="text-sm text-gray-400 leading-relaxed">{selectedDream.tafsir_positif}</p>
                 </div>
 
                 <div className="bg-red-500/5 border border-red-500/20 p-6 rounded-2xl space-y-3">
-                    <h4 className="text-red-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
-                        <ICONS.Moon size={16} /> Sisi Gelap (Peringatan)
+                    <h4 className="text-red-400 font-bold flex items-center gap-2 text-sm uppercase">
+                        <ICONS.Moon size={16} /> Peringatan
                     </h4>
                     <p className="text-sm text-gray-400 leading-relaxed">{selectedDream.tafsir_negatif}</p>
                 </div>
@@ -72,31 +71,14 @@ const DetailMimpi: React.FC = () => {
         </section>
 
         <div className="bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] p-8 rounded-3xl flex justify-between items-center shadow-xl shadow-[#7F5AF0]/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
             <div className="z-10">
-                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-1">Angka Keberuntungan</h4>
+                <h4 className="text-xs font-bold uppercase text-white/70 mb-1">Angka Keberuntungan</h4>
                 <p className="text-4xl font-cinzel font-bold text-white tracking-widest glow-text">{selectedDream.angka}</p>
             </div>
             <div className="text-5xl animate-bounce">🔮</div>
         </div>
 
         <AdBanner type="banner" />
-
-        <section className="space-y-5">
-            <h3 className="text-lg font-bold px-1">Mimpi yang Serupa</h3>
-            <div className="space-y-3">
-                {MOCK_DREAMS.filter(d => d.id !== selectedDream.id).map(dream => (
-                    <div 
-                        key={dream.id} 
-                        onClick={() => navigateToDetail(dream)}
-                        className="bg-[#1A1A2E]/40 p-5 rounded-2xl flex items-center justify-between cursor-pointer border border-white/5 hover:border-[#7F5AF0]/30 transition-all"
-                    >
-                        <span className="text-sm font-medium">{dream.judul}</span>
-                        <ICONS.Next size={16} className="text-gray-600" />
-                    </div>
-                ))}
-            </div>
-        </section>
     </motion.div>
   );
 };

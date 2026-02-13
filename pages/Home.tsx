@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ICONS, MOCK_DREAMS, ZODIAC_LIST } from '../constants';
-import { Page } from '../types';
-import { useAppContext } from '../context/AppContext';
-import SectionTitle from '../components/ui/SectionTitle';
-import AdBanner from '../components/AdBanner';
+import { ICONS, MOCK_DREAMS, ZODIAC_LIST } from '../constants.tsx';
+import { Page } from '../types.ts';
+import { useAppContext } from '../context/AppContext.tsx';
+import SectionTitle from '../components/ui/SectionTitle.tsx';
+import AdBanner from '../components/AdBanner.tsx';
 
 const Home: React.FC = () => {
   const { setCurrentPage, setSelectedDream, setShowInterstitial } = useAppContext();
@@ -51,17 +50,17 @@ const Home: React.FC = () => {
                 onClick={() => setCurrentPage(cat.id)}
                 className="flex flex-col items-center gap-2 group"
             >
-                <div className="w-14 h-14 bg-[#1A1A2E] rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-[#7F5AF0]/50 group-hover:bg-[#7F5AF0]/5 transition-all">
+                <div className="w-14 h-14 bg-[#1A1A2E] rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-[#7F5AF0]/50 transition-all">
                     <span className="text-2xl">{cat.icon}</span>
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-white">{cat.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{cat.label}</span>
             </button>
         ))}
       </section>
 
       <section className="space-y-4">
         <SectionTitle 
-          rightElement={<button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest">Semua</button>}
+          rightElement={<button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase">Semua</button>}
         >
           Mimpi Populer
         </SectionTitle>
@@ -70,14 +69,14 @@ const Home: React.FC = () => {
                 <div 
                     key={dream.id} 
                     onClick={() => navigateToDetail(dream)}
-                    className="snap-center flex-shrink-0 w-44 bg-[#1A1A2E] p-4 rounded-2xl border border-white/5 space-y-3 cursor-pointer active:scale-95 transition-transform"
+                    className="snap-center flex-shrink-0 w-44 bg-[#1A1A2E] p-4 rounded-2xl border border-white/5 space-y-3 cursor-pointer transition-transform"
                 >
                     <div className="w-10 h-10 bg-[#7F5AF0]/10 rounded-xl flex items-center justify-center text-[#7F5AF0]">
                         <ICONS.Dream size={20} />
                     </div>
                     <div>
                         <p className="font-bold text-sm line-clamp-2 leading-tight h-10">{dream.judul}</p>
-                        <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">{dream.kategori}</p>
+                        <p className="text-[10px] text-gray-500 mt-1 uppercase">{dream.kategori}</p>
                     </div>
                 </div>
             ))}
@@ -88,17 +87,17 @@ const Home: React.FC = () => {
 
       <section 
         onClick={() => setCurrentPage(Page.ZODIAC)}
-        className="bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] p-6 rounded-3xl border border-[#7F5AF0]/20 space-y-5 relative overflow-hidden group cursor-pointer"
+        className="bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] p-6 rounded-3xl border border-[#7F5AF0]/20 space-y-5 relative overflow-hidden cursor-pointer"
       >
-        <div className="absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+        <div className="absolute -top-4 -right-4 p-4 opacity-5">
             <ICONS.Zodiac size={120} />
         </div>
         <div className="flex justify-between items-start">
             <div>
                 <h3 className="text-xl font-bold font-cinzel">Zodiak Hari Ini</h3>
-                <p className="text-xs text-gray-400">Intip keberuntunganmu bintangmu.</p>
+                <p className="text-xs text-gray-400">Intip keberuntungan bintangmu.</p>
             </div>
-            <div className="bg-[#7F5AF0] p-2 rounded-xl shadow-lg shadow-[#7F5AF0]/30 animate-pulse-glow">
+            <div className="bg-[#7F5AF0] p-2 rounded-xl shadow-lg shadow-[#7F5AF0]/30">
                 <ICONS.Star size={16} className="text-white" />
             </div>
         </div>
