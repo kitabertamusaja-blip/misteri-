@@ -1,4 +1,5 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+
+import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
@@ -7,6 +8,7 @@ import {
   Zap, Wallet, Briefcase, HeartPulse
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
+import { saveMimpiToDB } from './services/api';
 
 /** --- CONSTANTS & MOCK DATA --- **/
 const Page = {
@@ -30,15 +32,18 @@ const ZODIAC_LIST = [
   { n: 'Aquarius', t: '20 Jan - 18 Feb', i: '♒' }, { n: 'Pisces', t: '19 Feb - 20 Mar', i: '♓' }
 ];
 
+// Initialize Google GenAI with API Key from process.env
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /** --- CONTEXT --- **/
-const AppContext = createContext(undefined);
-const AppProvider = ({ children }) => {
+const AppContext = createContext<any>(undefined);
+
+// Fix: Make children optional to avoid "Property 'children' is missing" errors in some TypeScript configurations
+const AppProvider = ({ children }: { children?: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(Page.HOME);
-  const [favorites, setFavorites] = useState([]);
-  const [selectedDream, setSelectedDream] = useState(null);
-  const [selectedZodiac, setSelectedZodiac] = useState(null);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedDream, setSelectedDream] = useState<any>(null);
+  const [selectedZodiac, setSelectedZodiac] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showInterstitial, setShowInterstitial] = useState(false);
 
@@ -47,7 +52,7 @@ const AppProvider = ({ children }) => {
     if (saved) setFavorites(JSON.parse(saved));
   }, []);
 
-  const toggleFavorite = (id) => {
+  const toggleFavorite = (id: number) => {
     setFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
       localStorage.setItem('m_favs', JSON.stringify(next));
@@ -55,7 +60,7 @@ const AppProvider = ({ children }) => {
     });
   };
 
-  const navigate = (page, data = null) => {
+  const navigate = (page: string, data: any = null) => {
     if (page === Page.DETAIL) {
       setSelectedDream(data);
       setShowInterstitial(true);
@@ -76,10 +81,10 @@ const AppProvider = ({ children }) => {
 const useAppContext = () => useContext(AppContext);
 
 /** --- SHARED UI COMPONENTS --- **/
-const AdBanner = ({ type = 'banner', onClose = () => {} }) => {
+const AdBanner = ({ type = 'banner', onClose = () => {} }: { type?: string, onClose?: () => void }) => {
   if (type === 'interstitial') return (
     <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center p-6">
-      <motion.div initial={{scale:0.95, opacity:0}} animate={{scale:1, opacity:1}} className="bg-[#1A1A2E] w-full max-w-sm rounded-3xl border border-[#7F5AF0]/50 overflow-hidden shadow-2xl">
+      <motion.div initial={{scale:0.95, opacity:0}} animate={{scale:1, opacity:1}} className="bg-[#1A1A2E] w-full max-sm rounded-3xl border border-[#7F5AF0]/50 overflow-hidden shadow-2xl">
         <div className="bg-[#7F5AF0] p-2 text-[10px] text-center font-bold uppercase tracking-[0.3em]">SPONSORED CONTENT</div>
         <div className="p-8 text-center space-y-6">
           <div className="w-20 h-20 bg-[#7F5AF0]/10 rounded-full mx-auto flex items-center justify-center border border-[#7F5AF0]/30">
@@ -104,7 +109,7 @@ const AdBanner = ({ type = 'banner', onClose = () => {} }) => {
   );
 };
 
-const SectionHeader = ({ title, subtitle, icon: Icon = null, onMore = null }) => (
+const SectionHeader = ({ title, subtitle, icon: Icon = null, onMore = null }: { title: string, subtitle: string, icon?: any, onMore?: any }) => (
   <div className="flex justify-between items-end mb-5">
     <div>
       <div className="flex items-center gap-2 mb-1">
@@ -128,7 +133,6 @@ const HomePage = () => {
 
   return (
     <div className="py-6 space-y-10">
-      {/* Header Visual */}
       <div className="space-y-6">
         <h2 className="text-5xl font-cinzel font-bold leading-tight tracking-tight">
           Ungkap <br/>
@@ -136,7 +140,6 @@ const HomePage = () => {
           Takdirmu.
         </h2>
         
-        {/* BIG SEARCH BAR */}
         <div 
           onClick={() => navigate(Page.SEARCH)} 
           className="bg-[#1A1A2E] p-6 rounded-3xl border border-white/10 flex items-center gap-5 text-gray-500 cursor-pointer shadow-[0_15px_30px_rgba(0,0,0,0.5)] hover:border-[#7F5AF0]/50 transition-all group"
@@ -148,7 +151,6 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Grid Kategori */}
       <div className="grid grid-cols-4 gap-4">
         {[
           { l: 'Mimpi', p: Page.TRENDING, i: '🔮', color: '#7F5AF0' },
@@ -165,7 +167,6 @@ const HomePage = () => {
         ))}
       </div>
 
-      {/* Trending Mimpi */}
       <section>
         <SectionHeader title="Mimpi Populer" subtitle="Paling sering dicari" onMore={() => navigate(Page.TRENDING)} />
         <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar">
@@ -188,7 +189,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Zodiak Preview Card */}
       <section 
         className="bg-[#1A1A2E] p-8 rounded-[2.5rem] border border-[#7F5AF0]/30 relative overflow-hidden shadow-2xl cursor-pointer active:scale-[0.98] transition-all"
         onClick={() => navigate(Page.ZODIAC)}
@@ -246,7 +246,56 @@ const ZodiacPage = () => {
 
 const ZodiacDetailPage = () => {
   const { selectedZodiac, navigate } = useAppContext();
+  const [fortune, setFortune] = useState<any>(null);
+  const [localLoading, setLocalLoading] = useState(true);
+
+  useEffect(() => {
+    if (selectedZodiac) {
+      fetchFortune();
+    }
+  }, [selectedZodiac]);
+
+  const fetchFortune = async () => {
+    setLocalLoading(true);
+    try {
+      const prompt = `Berikan ramalan zodiak harian untuk ${selectedZodiac.n}. 
+      Berikan tafsir untuk aspek Cinta, Karir, dan Keuangan. 
+      Bahasa: Indonesia. Gaya bahasa: Mistis, inspiratif, dan bijak.
+      Kembalikan dalam format JSON murni.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              cinta: { type: Type.STRING },
+              karir: { type: Type.STRING },
+              keuangan: { type: Type.STRING }
+            },
+            required: ["cinta", "karir", "keuangan"]
+          }
+        }
+      });
+      
+      const data = JSON.parse(response.text || '{}');
+      setFortune(data);
+    } catch (e) {
+      console.error("Gagal menjemput ramalan:", e);
+      setFortune({
+        cinta: "Energi kosmik sedang tertutup awan gelap, cobalah kembali nanti.",
+        karir: "Fokuslah pada apa yang ada di depan mata.",
+        keuangan: "Hemat adalah kunci keselamatan hari ini."
+      });
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
   if (!selectedZodiac) return null;
+
   return (
     <div className="py-6 space-y-10">
       <button onClick={() => navigate(Page.ZODIAC)} className="text-[#7F5AF0] bg-[#7F5AF0]/10 px-5 py-2 rounded-full flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest border border-[#7F5AF0]/20"><ArrowLeft size={16}/> Kembali</button>
@@ -259,23 +308,30 @@ const ZodiacDetailPage = () => {
         </div>
       </div>
       
-      <div className="space-y-4">
-        {[
-          { l: 'Cinta', v: 'Akan ada seseorang dari masa lalu yang menghubungimu. Tetap tenang.', i: HeartPulse, color: '#FF4D94', bg: 'bg-[#FF4D94]/10' },
-          { l: 'Karir', v: 'Waktu yang tepat untuk menunjukkan kemampuanmu di depan atasan.', i: Briefcase, color: '#4D94FF', bg: 'bg-[#4D94FF]/10' },
-          { l: 'Keuangan', v: 'Ada rezeki kecil tak terduga sore ini. Tabunglah sedikit.', i: Wallet, color: '#4DFF94', bg: 'bg-[#4DFF94]/10' }
-        ].map(item => (
-          <div key={item.l} className="bg-[#1A1A2E] p-6 rounded-3xl border border-white/5 flex gap-5 items-center shadow-lg">
-            <div className={`w-14 h-14 rounded-2xl ${item.bg} flex items-center justify-center`} style={{ color: item.color }}>
-              <item.i size={28}/>
+      {localLoading ? (
+        <div className="py-20 flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#7F5AF0]/20 border-t-[#7F5AF0] rounded-full animate-spin" />
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-500 animate-pulse">Membaca Rasi Bintang...</p>
+        </div>
+      ) : (
+        <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="space-y-4">
+          {[
+            { l: 'Cinta', v: fortune?.cinta, i: HeartPulse, color: '#FF4D94', bg: 'bg-[#FF4D94]/10' },
+            { l: 'Karir', v: fortune?.karir, i: Briefcase, color: '#4D94FF', bg: 'bg-[#4D94FF]/10' },
+            { l: 'Keuangan', v: fortune?.keuangan, i: Wallet, color: '#4DFF94', bg: 'bg-[#4DFF94]/10' }
+          ].map(item => (
+            <div key={item.l} className="bg-[#1A1A2E] p-6 rounded-3xl border border-white/5 flex gap-5 items-center shadow-lg">
+              <div className={`w-14 h-14 rounded-2xl ${item.bg} flex items-center justify-center`} style={{ color: item.color }}>
+                <item.i size={28}/>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-xs uppercase tracking-[0.2em] mb-1" style={{ color: item.color }}>{item.l}</h4>
+                <p className="text-sm text-gray-400 leading-relaxed font-medium">{item.v}</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-xs uppercase tracking-[0.2em] mb-1" style={{ color: item.color }}>{item.l}</h4>
-              <p className="text-sm text-gray-400 leading-relaxed font-medium">{item.v}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </motion.div>
+      )}
       <AdBanner />
     </div>
   );
@@ -311,7 +367,6 @@ const DetailMimpiPage = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* TAFSIR POSITIF - SOLID BLOCKS */}
         <div className="bg-[#102A20] p-8 rounded-[2rem] border border-green-500/20 shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-green-500/20 p-2 rounded-lg text-green-400"><Zap size={18}/></div>
@@ -320,7 +375,6 @@ const DetailMimpiPage = () => {
           <p className="text-sm text-gray-300 leading-relaxed font-medium">{selectedDream.tafsir_positif}</p>
         </div>
 
-        {/* TAFSIR NEGATIF - SOLID BLOCKS */}
         <div className="bg-[#2A1010] p-8 rounded-[2rem] border border-red-500/20 shadow-lg">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-red-500/20 p-2 rounded-lg text-red-400"><Moon size={18}/></div>
@@ -330,7 +384,6 @@ const DetailMimpiPage = () => {
         </div>
       </div>
 
-      {/* LUCKY NUMBER - BOLD SOLID BLOCK */}
       <div className="bg-[#7F5AF0] p-10 rounded-[3rem] text-center shadow-[0_20px_40px_rgba(127,90,240,0.4)] relative overflow-hidden group">
         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
         <p className="text-xs uppercase font-bold text-white/70 tracking-[0.5em] mb-4">Angka Keberuntungan</p>
@@ -345,21 +398,47 @@ const DetailMimpiPage = () => {
 const SearchPage = () => {
   const { navigate, setIsLoading } = useAppContext();
   const [q, setQ] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<any[]>([]);
 
-  const handleSearch = async (e) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!q.trim()) return;
     setIsLoading(true);
+    
+    // Logic: Cari di database atau generate baru via Gemini
     const res = await (async (prompt) => {
       try {
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
-          contents: `Tafsir mimpi: "${prompt}". JSON: { "judul": "...", "ringkasan": "...", "tafsir_positif": "...", "tafsir_negatif": "...", "angka": "...", "kategori": "..." }`,
-          config: { responseMimeType: "application/json" }
+          contents: `Tafsir mimpi: "${prompt}".`,
+          config: { 
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                judul: { type: Type.STRING },
+                ringkasan: { type: Type.STRING },
+                tafsir_positif: { type: Type.STRING },
+                tafsir_negatif: { type: Type.STRING },
+                angka: { type: Type.STRING },
+                kategori: { type: Type.STRING }
+              },
+              required: ["judul", "ringkasan", "tafsir_positif", "tafsir_negatif", "angka", "kategori"]
+            }
+          }
         });
-        return JSON.parse(response.text || '{}');
-      } catch (e) { return null; }
+        const dreamData = JSON.parse(response.text || '{}');
+        
+        // CRITICAL: Simpan ke MySQL setelah generate
+        if (dreamData && dreamData.judul) {
+           await saveMimpiToDB(dreamData);
+        }
+        
+        return dreamData;
+      } catch (e) { 
+        console.error("Search Error:", e);
+        return null; 
+      }
     })(q);
     
     if (res) {
@@ -527,7 +606,6 @@ const AppContent = () => {
         {currentPage === Page.FAVORITE && <div className="py-40 text-center font-cinzel text-2xl opacity-20 uppercase tracking-[0.3em]">Favorit Belum Tersedia</div>}
       </main>
 
-      {/* SOLID BOTTOM NAV */}
       <nav className="fixed bottom-0 left-0 right-0 h-24 bg-[#1A1A2E] border-t border-white/5 flex items-center justify-around z-50 max-w-md mx-auto rounded-t-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
         {[
           { id: Page.HOME, i: Moon, l: 'Home' },
@@ -568,11 +646,15 @@ const AppContent = () => {
   );
 };
 
+// Fix: Remove React.FC to avoid issues where FunctionComponent requires children in certain React/TS versions
 const App = () => (
   <AppProvider>
     <AppContent />
   </AppProvider>
 );
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(<App />);
+}
