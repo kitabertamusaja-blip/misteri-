@@ -9,6 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
     
+    <script>
+      // Shim untuk mencegah error "process is not defined"
+      window.process = { 
+        env: { 
+          API_KEY: "" // Akan diisi secara internal oleh sistem jika tersedia
+        } 
+      };
+    </script>
+
     <script type="importmap">
 {
   "imports": {

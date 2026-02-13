@@ -1,1 +1,1 @@
-// File dikonsolidasi ke index.tsx untuk mendukung hosting tanpa build step.
+// Konten telah dipindahkan ke index.tsx untuk mendukung deployment tanpa build step.
