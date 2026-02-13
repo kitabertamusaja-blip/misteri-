@@ -7,7 +7,7 @@
     <!-- Menggunakan Tailwind CSS versi stabil -->
     <link href="https://unpkg.com/tailwindcss@^2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="/index.css">
     
     <script type="importmap">
 {
@@ -23,8 +23,8 @@
   }
 }
 </script>
-    <!-- Entry point aplikasi -->
-    <script type="module" src="index.tsx"></script>
+    <!-- Menggunakan path absolut /index.tsx agar tidak bingung saat di sub-halaman -->
+    <script type="module" src="/index.tsx"></script>
 </head>
 <body class="bg-mystic-gradient min-h-screen pb-20 md:pb-0 text-white overflow-x-hidden">
     <div id="root"></div>
