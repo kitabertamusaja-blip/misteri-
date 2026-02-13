@@ -38,8 +38,8 @@
       }
     </script>
     
-    <!-- data-type="module" sangat penting agar Babel mengenali importmap -->
-    <script type="text/babel" data-presets="my-preset" data-type="module" src="index.tsx"></script>
+    <!-- Menggunakan path absolut /index.tsx agar browser tidak bingung saat di sub-page -->
+    <script type="text/babel" data-presets="my-preset" data-type="module" src="/index.tsx"></script>
 </head>
 <body class="bg-mystic-gradient min-h-screen pb-20 md:pb-0 text-white overflow-x-hidden">
     <div id="root"></div>
