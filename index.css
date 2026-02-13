@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #0F0F1A;
+  }
+}
+
+@layer components {
+  .font-cinzel { font-family: 'Cinzel', serif; }
+  
+  .bg-mystic-gradient {
+    background: radial-gradient(circle at top right, #1A1A2E, #0F0F1A 60%);
+  }
+  
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(127, 90, 240, 0.4);
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 12px rgba(127, 90, 240, 0.7);
+  }
+  
+  .nav-blur {
+    background: rgba(26, 26, 46, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite;
+}

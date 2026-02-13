@@ -1,63 +1,24 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Misteri+ | Tafsir Mimpi & Zodiak</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #0F0F1A;
-            color: #FFFFFF;
-            overflow-x: hidden;
-        }
-        .font-cinzel { font-family: 'Cinzel', serif; }
-        .bg-mystic-gradient {
-            background: radial-gradient(circle at top right, #1A1A2E, #0F0F1A 60%);
-        }
-        .glow-purple {
-            box-shadow: 0 0 20px rgba(127, 90, 240, 0.4);
-        }
-        .glow-text {
-            text-shadow: 0 0 12px rgba(127, 90, 240, 0.7);
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .nav-blur {
-            background: rgba(26, 26, 46, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.8; }
-        }
-        .animate-pulse-glow {
-            animation: pulse-glow 3s infinite;
-        }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "framer-motion": "https://esm.sh/framer-motion@^11.0.8"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+        "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+        "react/": "https://esm.sh/react@^19.2.4/",
+        "react": "https://esm.sh/react@^19.2.4",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "framer-motion": "https://esm.sh/framer-motion@^11.0.8"
+      }
+    }
+    </script>
 </head>
-<body class="bg-mystic-gradient min-h-screen pb-20 md:pb-0">
+<body class="bg-mystic-gradient min-h-screen pb-20 md:pb-0 text-white overflow-x-hidden">
     <div id="root"></div>
 </body>
 </html>
