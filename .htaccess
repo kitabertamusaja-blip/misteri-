@@ -2,13 +2,19 @@
   RewriteEngine On
   RewriteBase /
 
-  # Fix MIME Type untuk .tsx agar dikenali browser sebagai JS Module
+  # Paksa MIME type untuk file TypeScript/React agar dikenali sebagai JavaScript
+  <FilesMatch "\.(tsx|ts)$">
+    ForceType application/javascript
+  </FilesMatch>
+
+  # Tambahkan header untuk modul (Opsional tapi membantu di beberapa server)
   AddType application/javascript .tsx
+  AddType application/javascript .ts
 
   # Jangan arahkan folder /api ke index.html
   RewriteRule ^api/ - [L]
   
-  # Arahkan semua request lain ke index.html (SPA Routing)
+  # SPA Routing: Arahkan semua request non-file ke index.html
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
