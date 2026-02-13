@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // GANTI DENGAN DETAIL DATABASE RUMAHWEB ANDA
 $host = "localhost";
-$db_name = "NAMA_DATABASE_ANDA";
-$username = "USER_DATABASE_ANDA";
-$password = "PASSWORD_DATABASE_ANDA";
+$db_name = "fach6357_misteri";
+$username = "fach6357_mridla";
+$password = "@@22Hari11Bulan";
 
 try {
     $conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
