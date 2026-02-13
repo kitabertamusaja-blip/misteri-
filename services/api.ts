@@ -1,7 +1,6 @@
 
-// GANTI URL DI BAWAH INI dengan domain asli Anda (misal: https://misteriplus.com/api)
-// Agar meskipun dijalankan dari preview, ia tetap bisa mengakses PHP di hosting Anda.
-const PROD_API_URL = 'https://misteri.fachrudin.web.id/api'; 
+// Menggunakan domain baru sesuai link yang diberikan user
+const PROD_API_URL = 'https://www.misteri.faciltrix.com/api'; 
 
 const API_BASE_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost/misteri-api' 
@@ -26,6 +25,8 @@ export const saveMimpiToDB = async (dreamData: any) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dreamData)
     });
+    // Kita tidak perlu menunggu response untuk UX yang lebih cepat, 
+    // tapi kita log untuk memantau keberhasilan sinkronisasi di background.
     const result = await response.json();
     console.log("DB Sync Result:", result);
   } catch (error) {
