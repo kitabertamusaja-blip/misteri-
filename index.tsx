@@ -7,21 +7,25 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 
-/** --- CONFIG & TYPES --- **/
-const COLORS = { primary: '#7F5AF0', bg: '#0F0F1A', card: '#1A1A2E' };
-enum Page { HOME = 'home', SEARCH = 'search', DETAIL = 'detail', ZODIAC = 'zodiac', TEST = 'test', TRENDING = 'trending', FAVORITE = 'favorite' }
+/** --- CONFIG & CONSTANTS --- **/
+const Page = { 
+  HOME: 'home', 
+  SEARCH: 'search', 
+  DETAIL: 'detail', 
+  ZODIAC: 'zodiac', 
+  TEST: 'test', 
+  TRENDING: 'trending', 
+  FAVORITE: 'favorite' 
+};
 
-/** --- ICONS --- **/
 const ICONS = {
   Dream: Moon, Zodiac: Sparkles, Test: Brain, Trending: TrendingUp, Search, 
   Heart, Share: Share2, Next: ChevronRight, User, Star, Moon, Sun
 };
 
-/** --- API & SERVICES --- **/
-const API_BASE_URL = window.location.origin + '/api';
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const getDynamicDreamInterpretation = async (userPrompt: string) => {
+const getDynamicDreamInterpretation = async (userPrompt) => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -40,7 +44,10 @@ const getDynamicDreamInterpretation = async (userPrompt: string) => {
       }
     });
     return JSON.parse(response.text || '{}');
-  } catch (error) { return null; }
+  } catch (error) { 
+    console.error("AI Error:", error);
+    return null; 
+  }
 };
 
 /** --- CONTEXT --- **/
@@ -76,16 +83,6 @@ const AppProvider = ({ children }) => {
 const useAppContext = () => useContext(AppContext);
 
 /** --- UI COMPONENTS --- **/
-const SectionTitle = ({ children, icon, rightElement }) => (
-  <div className="flex justify-between items-center mb-4 px-1">
-    <div className="flex items-center gap-3">
-      <div className="w-1 h-6 bg-[#7F5AF0] rounded-full"></div>
-      <h3 className="text-lg font-bold flex items-center gap-2">{icon}{children}</h3>
-    </div>
-    {rightElement}
-  </div>
-);
-
 const AdBanner = ({ type, onClose }) => {
   if (type === 'interstitial') return (
     <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-6">
@@ -139,7 +136,7 @@ const Layout = ({ children, currentPage, onNavigate }) => {
 
 /** --- PAGES --- **/
 const HomePage = () => {
-  const { setCurrentPage, setSelectedDream, setShowInterstitial } = useAppContext();
+  const { setCurrentPage } = useAppContext();
   return (
     <div className="py-6 space-y-8 animate-in fade-in duration-500">
       <h2 className="text-4xl font-cinzel font-bold leading-tight">Apa pesan<br/><span className="text-[#7F5AF0]">Semesta</span> bagimu?</h2>
@@ -147,7 +144,12 @@ const HomePage = () => {
         <ICONS.Search size={20}/> <span>Cari arti mimpimu...</span>
       </div>
       <div className="grid grid-cols-4 gap-4">
-        {[{l:'Mimpi', p:Page.TRENDING, i:'🔮'}, {l:'Zodiak', p:Page.ZODIAC, i:'♈'}, {l:'Tes', p:Page.TEST, i:'🧠'}, {l:'Hits', p:Page.TRENDING, i:'🔥'}].map(c=>(
+        {[
+          {l:'Mimpi', p:Page.TRENDING, i:'🔮'}, 
+          {l:'Zodiak', p:Page.ZODIAC, i:'♈'}, 
+          {l:'Tes', p:Page.TEST, i:'🧠'}, 
+          {l:'Hits', p:Page.TRENDING, i:'🔥'}
+        ].map(c=>(
           <button key={c.l} onClick={()=>setCurrentPage(c.p)} className="flex flex-col items-center gap-2">
             <div className="w-14 h-14 bg-[#1A1A2E] rounded-2xl flex items-center justify-center text-2xl border border-white/5">{c.i}</div>
             <span className="text-[10px] font-bold uppercase text-gray-400">{c.l}</span>

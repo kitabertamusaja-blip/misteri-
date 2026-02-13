@@ -2,23 +2,20 @@
   RewriteEngine On
   RewriteBase /
 
-  # 1. Pastikan file script tidak dianggap HTML
+  # Pastikan file script tidak dianggap HTML oleh browser
   AddType application/javascript .js .tsx .ts
   
   <FilesMatch "\.(tsx|ts|js)$">
     Header set Content-Type "application/javascript"
   </FilesMatch>
 
-  # 2. Lewati API folder
+  # Lewati folder API
   RewriteRule ^api/ - [L]
 
-  # 3. SPA Routing
-  # Jika file ada, sajikan langsung
+  # SPA Routing
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
   
-  # Jika bukan file, arahkan ke index.html
-  # Hindari file asset (gambar, font, css) diarahkan ke index.html
   RewriteCond %{REQUEST_URI} !\.(css|js|tsx|ts|png|jpg|jpeg|gif|svg|ico|woff2|json)$ [NC]
   RewriteRule . index.html [L]
 </IfModule>
