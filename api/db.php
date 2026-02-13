@@ -21,10 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 header("Content-Type: application/json; charset=UTF-8");
 
 // KONFIGURASI DATABASE
-$host = "localhost";
+$host = "127.0.0.1";
 $db_name = "fach6357_misteri";
 $username = "fach6357_mridla";
-$password = "@@22Hari11Bulan";
+$password = "22hari11bulan";
 
 try {
     $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
