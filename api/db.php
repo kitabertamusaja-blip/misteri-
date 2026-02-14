@@ -1,30 +1,32 @@
-
 <?php
-// Izinkan akses dari mana saja
-if (isset($_SERVER['HTTP_ORIGIN'])) {
-    header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Max-Age: 86400'); // cache selama 1 hari
-}
+/**
+ * File: api/db.php
+ * Deskripsi: Koneksi database dengan header CORS yang sangat longgar untuk menghindari 'Failed to Fetch'.
+ */
 
-// Header untuk pre-flight OPTIONS
+// 1. Matikan pelaporan error ke layar (agar tidak merusak JSON)
+error_reporting(0);
+ini_set('display_errors', 0);
+
+// 2. Header CORS - Harus paling atas tanpa karakter apapun sebelumnya
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept");
+header("Access-Control-Allow-Credentials: true");
+
+// 3. Tangani pre-flight OPTIONS
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-    
-    if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-        header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
-
-    exit(0);
+    http_response_code(200);
+    exit();
 }
 
 header("Content-Type: application/json; charset=UTF-8");
 
-// KONFIGURASI DATABASE
+// 4. Konfigurasi Database
 $host = "127.0.0.1";
 $db_name = "fach6357_misteri";
 $username = "fach6357_mridla";
-$password = "22hari11bulan";
+$password = "@@22Hari11Bulan"; // Menggunakan password yang sebelumnya dikonfirmasi berhasil
 
 try {
     $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
@@ -36,15 +38,20 @@ try {
     
     $conn = new PDO($dsn, $username, $password, $options);
 } catch (PDOException $e) {
-    if (basename($_SERVER['PHP_SELF']) == 'db.php') {
-        http_response_code(500);
-        echo json_encode([
-            "status" => "error",
-            "message" => "Koneksi database gagal",
-            "debug" => $e->getMessage()
-        ]);
-        exit();
-    }
+    // Jika koneksi gagal, jangan biarkan script mati mendadak
     $conn = null;
+    $db_error = $e->getMessage();
+}
+
+/**
+ * Fungsi pembantu untuk mengirim respon error JSON dengan CORS tetap aktif
+ */
+function sendError($msg, $code = 500) {
+    http_response_code($code);
+    echo json_encode([
+        "status" => "error",
+        "message" => $msg
+    ]);
+    exit();
 }
 ?>

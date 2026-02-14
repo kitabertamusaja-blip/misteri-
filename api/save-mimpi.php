@@ -1,10 +1,8 @@
-
 <?php
 require_once 'db.php';
 
 if (!$conn) {
-    echo json_encode(["status" => "error", "message" => "Database tidak terhubung"]);
-    exit();
+    sendError("Database connection failed: " . ($db_error ?? "Unknown error"));
 }
 
 // Tangkap data JSON
@@ -12,19 +10,12 @@ $json = file_get_contents("php://input");
 $data = json_decode($json);
 
 if (!$data || !isset($data->judul)) {
-    echo json_encode([
-        "status" => "error", 
-        "message" => "Data tidak lengkap atau format salah",
-        "received" => $json
-    ]);
-    exit();
+    sendError("Invalid data received. Required: 'judul'. Data: " . $json, 400);
 }
 
 try {
-    // Sanitasi slug
     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $data->judul)));
     
-    // Gunakan query yang mendukung update jika judul/slug sudah ada
     $query = "INSERT INTO mimpi (slug, judul, kategori, ringkasan, tafsir_positif, tafsir_negatif, angka, view_count) 
               VALUES (:slug, :judul, :kategori, :ringkasan, :tafsir_positif, :tafsir_negatif, :angka, 1)
               ON DUPLICATE KEY UPDATE view_count = view_count + 1";
@@ -40,8 +31,11 @@ try {
         ':angka' => $data->angka
     ]);
     
-    echo json_encode(["status" => "success", "message" => "Data berhasil disinkronisasi"]);
+    echo json_encode([
+        "status" => "success", 
+        "message" => "Data synchronized successfully"
+    ]);
 } catch(Exception $e) {
-    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+    sendError($e->getMessage());
 }
 ?>

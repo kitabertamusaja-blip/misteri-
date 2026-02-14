@@ -1,7 +1,11 @@
 <?php
-include_once 'db.php';
+require_once 'db.php';
 
-$q = isset($_GET['q']) ? $_GET['q'] : '';
+if (!$conn) {
+    sendError("Database connection failed: " . ($db_error ?? "Unknown error"));
+}
+
+$q = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if (empty($q)) {
     echo json_encode([]);
@@ -9,7 +13,6 @@ if (empty($q)) {
 }
 
 try {
-    // Mencari mimpi yang judulnya mengandung kata kunci
     $query = "SELECT * FROM mimpi WHERE judul LIKE :q ORDER BY view_count DESC LIMIT 10";
     $stmt = $conn->prepare($query);
     $keyword = "%{$q}%";
@@ -17,11 +20,8 @@ try {
     $stmt->execute();
     
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Pastikan angka dikonversi kembali ke format string jika perlu
     echo json_encode($results);
 } catch(Exception $e) {
-    http_response_code(500);
-    echo json_encode(["error" => $e->getMessage()]);
+    sendError($e->getMessage());
 }
 ?>
