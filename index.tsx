@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { 
   Sparkles, 
@@ -20,7 +20,12 @@ import {
   Calendar,
   Hash,
   Flame,
-  Bookmark
+  Bookmark,
+  Sun,
+  Palette,
+  Users,
+  Clock,
+  Store
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -32,7 +37,8 @@ export enum Page {
   ZODIAC = 'zodiac',
   NUMEROLOGY = 'numerology',
   TRENDING = 'trending',
-  FAVORITE = 'favorite'
+  FAVORITE = 'favorite',
+  JAVA_HOROSCOPE = 'java_horoscope'
 }
 
 export interface Dream {
@@ -117,21 +123,16 @@ const fetchZodiacFromDB = async (zodiac: string) => {
 
 const saveZodiacToDB = async (zodiac: string, fortune: any) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/save-zodiac.php`, {
+    await fetch(`${API_BASE_URL}/save-zodiac.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nama: zodiac, content: fortune })
     });
-    const result = await response.json();
-    if (result.status !== 'success') {
-      console.error("Gagal simpan zodiak ke DB:", result.message);
-    }
   } catch (e) {
     console.error("Network error saat simpan zodiak");
   }
 };
 
-// --- NEW NUMEROLOGY DB SERVICES ---
 const fetchNumerologyFromDB = async (dob: string) => {
   try {
     const response = await fetch(`${API_BASE_URL}/get-numerology.php?dob=${dob}`);
@@ -145,20 +146,40 @@ const fetchNumerologyFromDB = async (dob: string) => {
 
 const saveNumerologyToDB = async (dob: string, lifePath: number, reading: any) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/save-numerology.php`, {
+    await fetch(`${API_BASE_URL}/save-numerology.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dob, life_path_number: lifePath, content: reading })
     });
-    const result = await response.json();
-    if (result.status !== 'success') {
-      console.error("Gagal simpan numerologi ke DB:", result.message);
-    }
   } catch (e) {
-    console.error("Network error saat simpan numerologi");
+    console.error("Network error saat simpan numerologi:", e);
   }
 };
 
+const fetchPrimbonFromDB = async (dob: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/get-primbon.php?dob=${dob}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.status === 'success' ? data.data : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const savePrimbonToDB = async (dob: string, weton: string, neptu: number, reading: any) => {
+  try {
+    await fetch(`${API_BASE_URL}/save-primbon.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dob, weton, neptu, content: reading })
+    });
+  } catch (e) {
+    console.error("Network error saat simpan primbon:", e);
+  }
+};
+
+// --- AI GENERATORS ---
 const getAIInterpretation = async (userPrompt: string) => {
   try {
     const response = await ai.models.generateContent({
@@ -182,6 +203,7 @@ const getAIInterpretation = async (userPrompt: string) => {
     });
     return JSON.parse(response.text || '{}');
   } catch (error) {
+    console.error("Gemini AI Error:", error);
     return null;
   }
 };
@@ -235,6 +257,49 @@ const getNumerologyReading = async (number: number, dob: string) => {
     });
     return JSON.parse(response.text || '{}');
   } catch (error) {
+    return null;
+  }
+};
+
+const getPrimbonReading = async (dob: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Berikan ramalan Primbon Jawa lengkap untuk tanggal lahir ${dob}. 
+      Tugas spesifik:
+      1. Hitung Weton (Hari + Pasaran).
+      2. Hitung Nilai Neptu.
+      3. Berikan makna filosofis hari tersebut (misal: Senin adalah Bunga, Selasa adalah Api, Rabu adalah Daun, Kamis adalah Angin, Jumat adalah Air, Sabtu adalah Tanah, Minggu adalah Mega/Langit).
+      4. Berikan ramalan Watak, Keberuntungan, Rejeki.
+      5. Berikan daftar Pekerjaan yang cocok, Jodoh yang cocok, Warna keberuntungan, dan Hari Baik.
+      6. Berikan daftar Jenis Bisnis yang cocok untuk weton ini.
+      
+      Bahasa: Indonesia. Nuansa: Tradisional, Mistis, Berwibawa.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            weton: { type: Type.STRING },
+            neptu: { type: Type.NUMBER },
+            makna_hari: { type: Type.STRING, description: 'Makna filosofis hari tersebut (misal: "Kamis adalah Angin, wataknya pemberi")' },
+            watak: { type: Type.STRING },
+            keberuntungan: { type: Type.STRING },
+            rejeki: { type: Type.STRING },
+            pekerjaan: { type: Type.STRING, description: 'Daftar pekerjaan yang cocok' },
+            bisnis: { type: Type.STRING, description: 'Jenis bisnis atau wirausaha yang cocok' },
+            jodoh: { type: Type.STRING, description: 'Kriteria atau weton jodoh yang cocok' },
+            warna: { type: Type.STRING, description: 'Warna keberuntungan' },
+            hari_baik: { type: Type.STRING, description: 'Hari-hari baik untuk memulai hajat' },
+            saran: { type: Type.STRING }
+          },
+          required: ["weton", "neptu", "makna_hari", "watak", "keberuntungan", "rejeki", "pekerjaan", "bisnis", "jodoh", "warna", "hari_baik", "saran"]
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (error) {
+    console.error("Primbon AI Error:", error);
     return null;
   }
 };
@@ -337,49 +402,69 @@ const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void
 const HomePage = () => {
   const { setCurrentPage, setSelectedDream, setShowInterstitial, setIsLoading, trendingDreams, refreshTrending } = useAppContext();
   const [searchInput, setSearchInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = async () => {
-    if (!searchInput.trim()) return;
+    if (!searchInput.trim()) {
+      inputRef.current?.focus();
+      return;
+    }
     setIsLoading(true);
     
-    const dbResults = await fetchFromDB(searchInput);
-    if (dbResults && dbResults.length > 0) {
-        const found = dbResults[0];
-        setSelectedDream(found);
-        saveMimpiToDB(found); 
-        setShowInterstitial(true);
-        setCurrentPage(Page.DETAIL);
-        setIsLoading(false);
-        return;
-    }
+    try {
+      const dbResults = await fetchFromDB(searchInput);
+      if (dbResults && dbResults.length > 0) {
+          const found = dbResults[0];
+          setSelectedDream(found);
+          saveMimpiToDB(found); 
+          setShowInterstitial(true);
+          setCurrentPage(Page.DETAIL);
+          setIsLoading(false);
+          return;
+      }
 
-    const result = await getAIInterpretation(searchInput);
-    if (result) {
-        const dreamData = { ...result, view_count: 1 };
-        setSelectedDream(dreamData);
-        await saveMimpiToDB(dreamData);
-        refreshTrending();
-        setShowInterstitial(true);
-        setCurrentPage(Page.DETAIL);
+      const result = await getAIInterpretation(searchInput);
+      if (result) {
+          const dreamData = { ...result, view_count: 1 };
+          setSelectedDream(dreamData);
+          await saveMimpiToDB(dreamData);
+          refreshTrending();
+          setShowInterstitial(true);
+          setCurrentPage(Page.DETAIL);
+      } else {
+        alert("Energi mistis sedang terputus. Silakan coba kata kunci lain.");
+      }
+    } catch (err) {
+      console.error(err);
     }
     setIsLoading(false);
   };
 
+  const handleCategoryClick = (id: Page) => {
+    if (id === Page.HOME) {
+      inputRef.current?.focus();
+      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      setCurrentPage(id);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="py-6 space-y-10">
-      <section className="space-y-6">
+      <section className="space-y-6 text-center md:text-left">
         <h2 className="text-5xl font-cinzel font-bold leading-[1.1] tracking-tight">
           Apa pesan <br/>
           <span className="text-[#7F5AF0] drop-shadow-[0_0_10px_rgba(127,90,240,0.5)]">Semesta</span> bagimu?
         </h2>
-        <div className="relative group">
+        <div className="relative group max-w-lg mx-auto md:mx-0">
           <div className="absolute inset-0 bg-[#7F5AF0]/10 blur-2xl group-focus-within:bg-[#7F5AF0]/20 transition-all"></div>
           <input 
+            ref={inputRef}
             value={searchInput} 
             onChange={(e) => setSearchInput(e.target.value)} 
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
             placeholder="Ketik mimpimu semalam..." 
-            className="relative w-full bg-[#1A1A2E]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] py-5 pl-14 pr-16 text-white focus:outline-none focus:border-[#7F5AF0]/50 transition-all font-poppins text-base" 
+            className="relative w-full bg-[#1A1A2E]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] py-5 pl-14 pr-16 text-white focus:outline-none focus:border-[#7F5AF0]/50 transition-all font-poppins text-base shadow-2xl" 
           />
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#7F5AF0] transition-colors" size={22} />
           <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-[#7F5AF0] rounded-full text-white shadow-lg shadow-[#7F5AF0]/30 hover:bg-[#6b48d1] transition-all flex items-center justify-center active:scale-90">
@@ -393,9 +478,9 @@ const HomePage = () => {
           { label: 'Tafsir', id: Page.HOME, icon: <Moon size={24} />, color: '#7F5AF0' }, 
           { label: 'Zodiak', id: Page.ZODIAC, icon: <Sparkles size={24} />, color: '#FFD700' }, 
           { label: 'Numerik', id: Page.NUMEROLOGY, icon: <Zap size={24} />, color: '#2CB67D' }, 
-          { label: 'Trens', id: Page.TRENDING, icon: <TrendingUp size={24} />, color: '#E53E3E' }
+          { label: 'Primbon', id: Page.JAVA_HOROSCOPE, icon: <Sun size={24} />, color: '#FF7E33' }
         ].map(cat => (
-          <button key={cat.label} onClick={() => setCurrentPage(cat.id)} className="flex flex-col items-center gap-3 group">
+          <button key={cat.label} onClick={() => handleCategoryClick(cat.id)} className="flex flex-col items-center gap-3 group">
             <div className="w-16 h-16 bg-[#1A1A2E]/60 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center border border-white/5 group-hover:border-[#7F5AF0]/50 group-hover:bg-[#7F5AF0]/10 transition-all shadow-xl">
               <span style={{ color: cat.color }}>{cat.icon}</span>
             </div>
@@ -422,7 +507,7 @@ const HomePage = () => {
               whileTap={{ scale: 0.96 }}
               key={dream.slug} 
               onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }} 
-              className="flex-shrink-0 w-52 bg-[#1A1A2E]/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/5 space-y-4 hover:border-[#7F5AF0]/30 cursor-pointer transition-all shadow-2xl relative overflow-hidden group"
+              className="flex-shrink-0 w-52 bg-[#1A1A2E]/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-[#7F5AF0]/30 cursor-pointer transition-all"
             >
               <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Moon size={60} />
@@ -450,6 +535,13 @@ const HomePage = () => {
 
 const DetailPage = () => {
   const { selectedDream, setCurrentPage, favorites, toggleFavorite } = useAppContext();
+  
+  useEffect(() => {
+    if (!selectedDream) {
+      setCurrentPage(Page.HOME);
+    }
+  }, [selectedDream]);
+
   if (!selectedDream) return null;
 
   return (
@@ -619,24 +711,20 @@ const NumerologyPage = () => {
     if (!dob) return;
     setIsLoading(true);
     
-    // 1. Cek cache DB dulu
     const dbReading = await fetchNumerologyFromDB(dob);
+    const num = calculateLifePath(dob);
+    setLifePathNumber(num);
+
     if (dbReading) {
-      const num = calculateLifePath(dob);
-      setLifePathNumber(num);
       setReading(dbReading);
       setIsLoading(false);
       return;
     }
 
-    // 2. Jika tidak ada, panggil Gemini
-    const num = calculateLifePath(dob);
-    setLifePathNumber(num);
     const result = await getNumerologyReading(num, dob);
     
     if (result) {
       setReading(result);
-      // 3. Simpan ke DB untuk digunakan nanti
       await saveNumerologyToDB(dob, num, result);
     }
     setIsLoading(false);
@@ -651,13 +739,13 @@ const NumerologyPage = () => {
 
       {!reading ? (
         <section className="bg-[#1A1A2E]/50 backdrop-blur-xl p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
-          <div className="space-y-4">
-            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 block text-center">Tanggal Lahir Anda</label>
+          <div className="space-y-4 text-center">
+            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 block">Pilih Tanggal Lahir</label>
             <input 
               type="date" 
               value={dob}
               onChange={(e) => setDob(e.target.value)}
-              className="w-full bg-[#0F0F1A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-[#2CB67D]/50 transition-all font-poppins text-center" 
+              className="w-full bg-[#0F0F1A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-[#2CB67D]/50 transition-all font-poppins text-center text-lg" 
             />
           </div>
           <button 
@@ -721,6 +809,133 @@ const NumerologyPage = () => {
   );
 };
 
+const JavaHoroscopePage = () => {
+  const { setIsLoading } = useAppContext();
+  const [dob, setDob] = useState('');
+  const [reading, setReading] = useState<any>(null);
+
+  const handleCalculate = async () => {
+    if (!dob) return;
+    setIsLoading(true);
+    
+    const dbReading = await fetchPrimbonFromDB(dob);
+    if (dbReading) {
+      setReading(dbReading);
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await getPrimbonReading(dob);
+    if (result) {
+      setReading(result);
+      await savePrimbonToDB(dob, result.weton, result.neptu, result);
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-10">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight">Primbon <span className="text-[#FF7E33]">Jawa</span></h2>
+        <p className="text-sm text-gray-500 font-poppins">Menyingkap serat kehidupan melalui hitungan weton leluhur.</p>
+      </header>
+
+      {!reading ? (
+        <section className="bg-[#1A1A2E]/50 backdrop-blur-xl p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
+          <div className="space-y-4 text-center">
+            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 block">Kala Kelahiran (Tanggal Lahir)</label>
+            <input 
+              type="date" 
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              className="w-full bg-[#0F0F1A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-[#FF7E33]/50 transition-all font-poppins text-center text-lg" 
+            />
+          </div>
+          <button 
+            onClick={handleCalculate}
+            disabled={!dob}
+            className="w-full bg-[#FF7E33] hover:bg-[#e66a22] disabled:opacity-50 py-5 rounded-2xl font-bold text-white shadow-xl shadow-[#FF7E33]/20 transition-all uppercase tracking-widest text-xs active:scale-95 flex items-center justify-center gap-3"
+          >
+            <Sun size={18} /> Hitung Weton
+          </button>
+        </section>
+      ) : (
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
+          <div className="text-center space-y-6">
+            <div className="relative inline-block">
+               <div className="absolute inset-0 bg-[#FF7E33] blur-3xl opacity-20 animate-pulse"></div>
+               <div className="relative w-56 h-28 bg-gradient-to-br from-[#FF7E33] to-[#1A1A2E] rounded-3xl flex flex-col items-center justify-center border-4 border-[#FF7E33]/30 shadow-2xl px-4">
+                 <span className="text-2xl font-cinzel font-bold text-white uppercase tracking-wider">{reading.weton}</span>
+                 <span className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1">Neptu: {reading.neptu}</span>
+               </div>
+            </div>
+            <div className="px-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#FF7E33] mb-1">Pariweda Hari</p>
+              <h3 className="text-sm font-poppins font-semibold text-white italic bg-[#FF7E33]/10 py-3 px-4 rounded-2xl border border-[#FF7E33]/20">
+                "{reading.makna_hari}"
+              </h3>
+            </div>
+          </div>
+
+          <div className="grid gap-6">
+            <div className="bg-[#1A1A2E] p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-[#FF7E33]"></div>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">Watak Bawaan</h4>
+              <p className="text-gray-300 leading-relaxed font-poppins italic">"{reading.watak}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#FF7E33] tracking-widest flex items-center gap-2"><Briefcase size={12}/> Pekerjaan</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.pekerjaan}</p>
+              </div>
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-amber-500 tracking-widest flex items-center gap-2"><Store size={12}/> Bisnis Hoki</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.bisnis}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#7F5AF0] tracking-widest flex items-center gap-2"><Users size={12}/> Jodoh</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.jodoh}</p>
+              </div>
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-yellow-500 tracking-widest flex items-center gap-2"><Clock size={12}/> Hari Baik</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.hari_baik}</p>
+              </div>
+            </div>
+
+            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Palette size={16} className="text-[#2CB67D]" />
+                  <span className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Warna Keberuntungan</span>
+                </div>
+                <span className="text-[#2CB67D] font-bold uppercase tracking-wider text-xs">{reading.warna}</span>
+            </div>
+
+            <div className="bg-[#FF7E33]/5 border border-[#FF7E33]/20 p-8 rounded-[2.5rem] space-y-4">
+              <h4 className="text-[#FF7E33] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <Coins size={14} /> Ramalan Rejeki
+              </h4>
+              <p className="text-sm text-gray-300 font-poppins leading-relaxed italic">"{reading.rejeki}"</p>
+            </div>
+
+            <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-[#7F5AF0]">Saran Spiritual</h4>
+              <p className="text-sm text-gray-400 font-poppins italic leading-relaxed">{reading.saran}</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-colors">Coba Tanggal Lain</button>
+        </motion.div>
+      )}
+
+      <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
 const TrendingPage = () => {
   const { trendingDreams, setSelectedDream, setShowInterstitial, setCurrentPage } = useAppContext();
 
@@ -742,9 +957,9 @@ const TrendingPage = () => {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: idx * 0.1 }}
             onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }}
-            className="bg-[#1A1A2E]/60 border border-white/5 p-5 rounded-[2rem] flex items-center gap-5 hover:border-[#E53E3E]/30 cursor-pointer transition-all group"
+            className="bg-[#1A1A2E]/60 border border-white/5 p-5 rounded-[2rem] flex items-center gap-5 hover:border-[#E53E3E]/30 cursor-pointer transition-all group shadow-xl"
           >
-            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-lg font-cinzel font-bold text-gray-500 group-hover:text-[#E53E3E]">
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-lg font-cinzel font-bold text-gray-500 group-hover:text-[#E53E3E] group-hover:scale-110 transition-transform">
               {idx + 1}
             </div>
             <div className="flex-1">
@@ -764,8 +979,6 @@ const TrendingPage = () => {
 
 const FavoritePage = () => {
   const { favorites, trendingDreams, setSelectedDream, setShowInterstitial, setCurrentPage } = useAppContext();
-  
-  // Filter mimpi favorit dari daftar trending atau buat dummy jika belum ada di list (seharusnya fetch by slug)
   const favoriteItems = trendingDreams.filter(d => favorites.includes(d.slug));
 
   return (
@@ -806,9 +1019,10 @@ const FavoritePage = () => {
   );
 };
 
-// --- MAIN LAYOUT ---
+// --- MAIN LAYOUT (PREMIUM UPGRADE) ---
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentPage, setCurrentPage } = useAppContext();
+  
   const navItems = [
     { id: Page.HOME, icon: Moon, label: 'Home' },
     { id: Page.TRENDING, icon: TrendingUp, label: 'Hits' },
@@ -816,7 +1030,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   ];
 
   return (
-    <div className="max-w-md mx-auto min-h-screen flex flex-col relative bg-[#0F0F1A] text-white selection:bg-[#7F5AF0]/30">
+    <div className="max-w-md mx-auto min-h-screen flex flex-col relative bg-[#0F0F1A] text-white selection:bg-[#7F5AF0]/30 overflow-hidden">
       <header className="px-6 py-5 flex items-center justify-between sticky top-0 z-40 bg-[#0F0F1A]/80 backdrop-blur-xl border-b border-white/5">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentPage(Page.HOME)}>
           <div className="w-11 h-11 bg-gradient-to-br from-[#7F5AF0] to-[#6b48d1] rounded-2xl flex items-center justify-center shadow-xl shadow-[#7F5AF0]/20 group-hover:scale-110 transition-transform">
@@ -824,28 +1038,50 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
           <h1 className="font-cinzel text-2xl font-bold tracking-[0.2em] text-white uppercase">Misteri<span className="text-[#7F5AF0]">+</span></h1>
         </div>
-        <button onClick={() => setCurrentPage(Page.NUMEROLOGY)} className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${currentPage === Page.NUMEROLOGY ? 'bg-[#2CB67D]/10 border-[#2CB67D]/50' : 'bg-[#1A1A2E] border-white/5'}`}>
+        <button onClick={() => setCurrentPage(Page.NUMEROLOGY)} className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${currentPage === Page.NUMEROLOGY ? 'bg-[#2CB67D]/20 border-[#2CB67D]/50 shadow-[0_0_15px_#2CB67D33]' : 'bg-[#1A1A2E] border-white/5'}`}>
           <Zap size={20} className={currentPage === Page.NUMEROLOGY ? 'text-[#2CB67D]' : 'text-[#7F5AF0]'} />
         </button>
       </header>
       
-      <main className="flex-1 px-6 pb-28">
+      <main className="flex-1 px-6 pb-32">
         {children}
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[calc(28rem-3rem)] h-20 bg-[#1A1A2E]/80 backdrop-blur-2xl border border-white/10 flex items-center justify-around z-50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_40px_rgba(127,90,240,0.2)] h-20 flex items-center justify-around z-50">
+        <div className="absolute -bottom-2 w-32 h-2 bg-[#7F5AF0] blur-2xl opacity-40"></div>
+        
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
           return (
-            <button key={item.id} onClick={() => setCurrentPage(item.id)} className={`flex flex-col items-center gap-1.5 transition-all w-16 relative ${isActive ? 'text-[#7F5AF0]' : 'text-gray-500 hover:text-gray-300'}`}>
-              <div className={`p-1 transition-transform duration-300 ${isActive ? 'scale-125 -translate-y-1' : ''}`}>
+            <button
+              key={item.id}
+              onClick={() => setCurrentPage(item.id)}
+              className="relative flex flex-col items-center justify-center w-16 group"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="active-pill"
+                  className="absolute inset-0 bg-[#7F5AF0]/20 rounded-2xl"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+
+              <div
+                className={`relative z-10 p-2 rounded-xl transition-all duration-300
+                ${isActive 
+                  ? "text-[#7F5AF0] scale-125 drop-shadow-[0_0_10px_#7F5AF0]" 
+                  : "text-white/60 group-hover:text-white"}`}
+              >
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`text-[8px] font-bold uppercase tracking-[0.2em] transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0'}`}>{item.label}</span>
-              {isActive && (
-                <motion.div layoutId="nav-glow" className="absolute -bottom-2 w-1 h-1 bg-[#7F5AF0] rounded-full shadow-[0_0_10px_#7F5AF0]" />
-              )}
+
+              <span
+                className={`text-[9px] font-bold tracking-widest mt-1 transition-all duration-300 uppercase
+                ${isActive ? "text-white opacity-100" : "text-white/50 opacity-0 group-hover:opacity-100"}`}
+              >
+                {item.label}
+              </span>
             </button>
           );
         })}
@@ -876,6 +1112,7 @@ const AppContent = () => {
       case Page.NUMEROLOGY: return <NumerologyPage />;
       case Page.TRENDING: return <TrendingPage />;
       case Page.FAVORITE: return <FavoritePage />;
+      case Page.JAVA_HOROSCOPE: return <JavaHoroscopePage />;
       default: return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="text-8xl filter drop-shadow-[0_0_20px_rgba(127,90,240,0.4)]">🔮</motion.div>
