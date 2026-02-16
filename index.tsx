@@ -954,28 +954,40 @@ const HomePage = () => {
             </h3>
             <div className="w-14 h-1.5 bg-gradient-to-r from-[#7F5AF0] to-transparent rounded-full mt-2"></div>
           </div>
-          <button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest hover:underline transition-all">Lihat Semua</button>
+          {/* Tombol dipindahkan ke bawah komentar */}
         </div>
 
         {/* Section Komentar 3 Hasil Terbaru - Persis di bawah teks HITS */}
-        <div className="px-2 grid grid-cols-1 gap-3">
-          {latestComments.slice(0, 3).map((comment) => (
-             <div key={comment.id} className="bg-white/5 border-l-2 border-[#7F5AF0] py-3 px-4 rounded-r-2xl flex items-start gap-3">
-                <div className="bg-[#7F5AF0]/10 p-2 rounded-lg">
-                   <MessageSquare size={14} className="text-[#7F5AF0]"/>
-                </div>
-                <div className="flex-1 overflow-hidden">
-                   <p className="text-[10px] font-bold text-white/80">{comment.name}</p>
-                   <p className="text-[11px] text-gray-500 italic truncate font-poppins">"{comment.message}"</p>
-                </div>
-             </div>
-          ))}
-          {latestComments.length === 0 && (
-             <p className="text-[9px] text-gray-700 italic px-2">Komentar dimensi masih tenang...</p>
-          )}
+        <div className="px-2 space-y-5">
+          <div className="grid grid-cols-1 gap-3">
+            {latestComments.slice(0, 3).map((comment) => (
+               <div key={comment.id} className="bg-white/5 border-l-2 border-[#7F5AF0] py-3 px-4 rounded-r-2xl flex items-start gap-3">
+                  <div className="bg-[#7F5AF0]/10 p-2 rounded-lg">
+                     <MessageSquare size={14} className="text-[#7F5AF0]"/>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                     <p className="text-[10px] font-bold text-white/80">{comment.name}</p>
+                     <p className="text-[11px] text-gray-500 italic truncate font-poppins">"{comment.message}"</p>
+                  </div>
+               </div>
+            ))}
+            {latestComments.length === 0 && (
+               <p className="text-[9px] text-gray-700 italic px-2">Komentar dimensi masih tenang...</p>
+            )}
+          </div>
+
+          {/* Posisi Baru LIHAT SEMUA (Menuju Ruang Diskusi/Komentar) */}
+          <div className="flex justify-center pt-2">
+            <button 
+              onClick={() => setCurrentPage(Page.COMMENT)} 
+              className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-[0.2em] py-2.5 px-8 bg-[#7F5AF0]/5 rounded-full border border-[#7F5AF0]/20 hover:bg-[#7F5AF0]/10 hover:border-[#7F5AF0]/40 transition-all shadow-lg active:scale-95"
+            >
+              Lihat Semua
+            </button>
+          </div>
         </div>
         
-        <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 pt-2 -mx-2 px-4 snap-x">
+        <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 pt-6 -mx-2 px-4 snap-x">
           {trendingDreams.map(dream => (
             <motion.div 
               key={dream.slug} 
@@ -1230,6 +1242,119 @@ const SundanesePrimbonPage = () => {
   );
 };
 
+const NumerologyPage = () => {
+  const { setIsLoading } = useAppContext();
+  const [dob, setDob] = useState('');
+  const [reading, setReading] = useState<any>(null);
+  const [lifePath, setLifePath] = useState<number | null>(null);
+
+  const calculateLifePath = (dateStr: string) => {
+    const digits = dateStr.replace(/\D/g, '');
+    let sum = digits.split('').reduce((acc, d) => acc + parseInt(d), 0);
+    while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
+      sum = sum.toString().split('').reduce((acc, d) => acc + parseInt(d), 0);
+    }
+    return sum;
+  };
+
+  const handleCalculate = async () => {
+    if (!dob) return;
+    setIsLoading(true);
+    const lp = calculateLifePath(dob);
+    setLifePath(lp);
+
+    const dbReading = await fetchNumerologyFromDB(dob);
+    if (dbReading) {
+      setReading(dbReading);
+    } else {
+      const result = await getNumerologyReading(lp, dob);
+      if (result) {
+        setReading(result);
+        await saveNumerologyToDB(dob, lp, result);
+      }
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Takdir <span className="text-[#2CB67D] drop-shadow-[0_0_10px_rgba(44,182,125,0.4)]">Numerik</span></h2>
+        <p className="text-sm text-gray-500 font-poppins px-6">Singkap kode rahasia yang tersembunyi dalam angka kelahiran Anda untuk 2026.</p>
+      </header>
+
+      {!reading ? (
+        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none shadow-2xl">
+          <div className="space-y-6 text-center">
+            <label className="text-[10px] font-bold uppercase tracking-[0.5em] text-gray-600 block">Kala Kelahiran</label>
+            <input 
+              type="date" 
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              className="w-full bg-[#0F0F1A]/80 border border-[#7F5AF0]/30 rounded-[2rem] py-7 px-8 text-[#A78BFA] focus:outline-none focus:border-[#7F5AF0] transition-all font-poppins text-center text-2xl shadow-inner" 
+              style={{ color: '#A78BFA', colorScheme: 'dark' }}
+            />
+          </div>
+          <button 
+            onClick={handleCalculate}
+            disabled={!dob}
+            className="w-full bg-[#2CB67D] hover:bg-[#249e6b] disabled:opacity-50 py-6 rounded-[2.5rem] font-bold text-white shadow-xl shadow-[#2CB67D]/20 transition-all uppercase tracking-[0.3em] text-xs active:scale-95 flex items-center justify-center gap-4"
+          >
+            <Zap size={24} /> Hitung Angka Takdir
+          </button>
+        </section>
+      ) : (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+           <div className="text-center space-y-10">
+            <div className="relative inline-block">
+               <div className="absolute inset-0 bg-[#2CB67D] blur-[100px] opacity-25 animate-pulse"></div>
+               <div className="relative w-72 h-40 bg-gradient-to-br from-[#2CB67D] to-[#1A1A2E] rounded-[3.5rem] flex flex-col items-center justify-center border-4 border-[#2CB67D]/30 shadow-2xl px-8">
+                 <span className="text-7xl font-cinzel font-bold text-white tracking-widest glow-text">{lifePath}</span>
+                 <div className="w-full h-[1px] bg-white/10 my-4"></div>
+                 <span className="text-[12px] text-white/90 font-bold uppercase tracking-[0.4em]">Life Path Number</span>
+               </div>
+            </div>
+          </div>
+
+          <div className="grid gap-8">
+            <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#2CB67D] to-transparent rounded-full"></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Kepribadian Utama</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins italic text-xl text-white">"{reading.kepribadian}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#2CB67D] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Karir 2026</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.karir}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#7F5AF0] tracking-[0.3em] flex items-center gap-3"><Heart size={18}/> Asmara</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.asmara}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card bg-[#2CB67D]/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-[#2CB67D] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Sparkles size={22} /> Batu Permata Hoki
+              </h4>
+              <p className="text-xl text-gray-300 font-poppins leading-relaxed italic text-white">"{reading.batu_permata}"</p>
+            </div>
+
+             <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Saran Semesta 2026</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins text-lg text-white">{reading.saran}</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Hitung Ulang</button>
+        </motion.div>
+      )}
+      <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
 const JavaHoroscopePage = () => {
   const { setIsLoading } = useAppContext();
   const [dob, setDob] = useState('');
@@ -1463,7 +1588,7 @@ const AppContent = () => {
       case Page.HOME: return <HomePage />;
       case Page.DETAIL: return <DetailPage />;
       case Page.ZODIAC: return <ZodiacPage />;
-      case Page.NUMEROLOGY: return <CommentPage />; // Fallback placeholder if not handled, actually handled by case
+      case Page.NUMEROLOGY: return <CommentPage />; // Fallback placeholder
       case Page.JAVA_HOROSCOPE: return <JavaHoroscopePage />;
       case Page.CHINESE_ZODIAC: return <ChineseZodiacPage />;
       case Page.SUNDANESE_PRIMBON: return <SundanesePrimbonPage />;
