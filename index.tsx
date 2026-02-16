@@ -16,7 +16,11 @@ import {
   Zap,
   Coffee,
   Briefcase,
-  Coins
+  Coins,
+  Calendar,
+  Hash,
+  Flame,
+  Bookmark
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -26,6 +30,7 @@ export enum Page {
   HOME = 'home',
   DETAIL = 'detail',
   ZODIAC = 'zodiac',
+  NUMEROLOGY = 'numerology',
   TRENDING = 'trending',
   FAVORITE = 'favorite'
 }
@@ -99,7 +104,6 @@ const saveMimpiToDB = async (dreamData: any) => {
   }
 };
 
-// New Zodiac DB Services
 const fetchZodiacFromDB = async (zodiac: string) => {
   try {
     const response = await fetch(`${API_BASE_URL}/get-zodiac.php?nama=${zodiac}`);
@@ -113,13 +117,45 @@ const fetchZodiacFromDB = async (zodiac: string) => {
 
 const saveZodiacToDB = async (zodiac: string, fortune: any) => {
   try {
-    await fetch(`${API_BASE_URL}/save-zodiac.php`, {
+    const response = await fetch(`${API_BASE_URL}/save-zodiac.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nama: zodiac, content: fortune })
     });
+    const result = await response.json();
+    if (result.status !== 'success') {
+      console.error("Gagal simpan zodiak ke DB:", result.message);
+    }
   } catch (e) {
-    console.error("Gagal simpan zodiak ke DB");
+    console.error("Network error saat simpan zodiak");
+  }
+};
+
+// --- NEW NUMEROLOGY DB SERVICES ---
+const fetchNumerologyFromDB = async (dob: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/get-numerology.php?dob=${dob}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.status === 'success' ? data.data : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const saveNumerologyToDB = async (dob: string, lifePath: number, reading: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/save-numerology.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dob, life_path_number: lifePath, content: reading })
+    });
+    const result = await response.json();
+    if (result.status !== 'success') {
+      console.error("Gagal simpan numerologi ke DB:", result.message);
+    }
+  } catch (e) {
+    console.error("Network error saat simpan numerologi");
   }
 };
 
@@ -154,7 +190,7 @@ const getZodiacFortune = async (zodiac: string) => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Berikan ramalan harian untuk zodiak ${zodiac}. Hari ini: ${new Date().toLocaleDateString('id-ID')}. Fokus pada keberuntungan hari ini.`,
+      contents: `Berikan ramalan harian untuk zodiak ${zodiac}. Hari ini: ${new Date().toLocaleDateString('id-ID')}.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -168,6 +204,32 @@ const getZodiacFortune = async (zodiac: string) => {
             angka_hoki: { type: Type.STRING }
           },
           required: ["umum", "cinta", "karir", "keuangan", "warna_hoki", "angka_hoki"]
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (error) {
+    return null;
+  }
+};
+
+const getNumerologyReading = async (number: number, dob: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Berikan pembacaan numerologi untuk Angka Jalur Hidup (Life Path Number) ${number} berdasarkan tanggal lahir ${dob}. Nuansa: Mistis dan mendalam.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            kepribadian: { type: Type.STRING },
+            karir: { type: Type.STRING },
+            asmara: { type: Type.STRING },
+            saran: { type: Type.STRING },
+            batu_permata: { type: Type.STRING }
+          },
+          required: ["kepribadian", "karir", "asmara", "saran", "batu_permata"]
         }
       }
     });
@@ -330,7 +392,7 @@ const HomePage = () => {
         {[
           { label: 'Tafsir', id: Page.HOME, icon: <Moon size={24} />, color: '#7F5AF0' }, 
           { label: 'Zodiak', id: Page.ZODIAC, icon: <Sparkles size={24} />, color: '#FFD700' }, 
-          { label: 'Numerik', id: Page.TRENDING, icon: <Zap size={24} />, color: '#2CB67D' }, 
+          { label: 'Numerik', id: Page.NUMEROLOGY, icon: <Zap size={24} />, color: '#2CB67D' }, 
           { label: 'Trens', id: Page.TRENDING, icon: <TrendingUp size={24} />, color: '#E53E3E' }
         ].map(cat => (
           <button key={cat.label} onClick={() => setCurrentPage(cat.id)} className="flex flex-col items-center gap-3 group">
@@ -382,32 +444,6 @@ const HomePage = () => {
       </section>
 
       <AdBanner type="banner" />
-
-      <section 
-        onClick={() => setCurrentPage(Page.ZODIAC)} 
-        className="bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] p-8 rounded-[3rem] border border-[#7F5AF0]/20 hover:border-[#7F5AF0]/50 space-y-8 relative overflow-hidden cursor-pointer group transition-all shadow-2xl"
-      >
-        <div className="absolute -top-10 -right-10 text-[#7F5AF0] opacity-10 transition-transform group-hover:scale-110 duration-700">
-          <Sparkles size={200} />
-        </div>
-        <div className="flex justify-between items-center relative z-10">
-          <div>
-            <h3 className="text-2xl font-cinzel font-bold uppercase tracking-wider">Bintang Hari Ini</h3>
-            <p className="text-xs text-gray-400 font-poppins mt-1">Siklus keberuntungan sedang berputar.</p>
-          </div>
-          <div className="bg-[#7F5AF0] p-3 rounded-2xl text-white shadow-xl shadow-[#7F5AF0]/30 group-hover:scale-110 transition-transform">
-            <Star size={20} fill="currentColor" />
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-6 relative z-10">
-          {['♈', '♉', '♊', '♋'].map((icon, i) => (
-            <div key={i} className="text-center group-hover:translate-y-[-5px] transition-transform" style={{ transitionDelay: `${i * 50}ms` }}>
-              <span className="text-3xl block mb-2">{icon}</span>
-              <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{['Aries', 'Taurus', 'Gemini', 'Cancer'][i]}</span>
-            </div>
-          ))}
-        </div>
-      </section>
     </motion.div>
   );
 };
@@ -482,7 +518,6 @@ const ZodiacPage = () => {
     setIsLoading(true);
     setSelectedZodiac(nama);
     
-    // 1. Cek DB dulu
     const dbFortune = await fetchZodiacFromDB(nama);
     if (dbFortune) {
       setFortune(dbFortune);
@@ -490,11 +525,9 @@ const ZodiacPage = () => {
       return;
     }
 
-    // 2. Jika tidak ada di DB, panggil Gemini
     const aiResult = await getZodiacFortune(nama);
     if (aiResult) {
       setFortune(aiResult);
-      // 3. Simpan ke DB untuk hari ini
       await saveZodiacToDB(nama, aiResult);
     }
     setIsLoading(false);
@@ -541,48 +574,21 @@ const ZodiacPage = () => {
                   {ZODIAC_LIST.find(z => z.nama === selectedZodiac)?.icon}
                 </span>
                 <h1 className="text-4xl font-cinzel font-bold tracking-widest uppercase">{selectedZodiac}</h1>
-                <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 px-6 py-2 rounded-full">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFD700]">Ramalan Hari Ini</p>
-                </div>
               </div>
 
               <section className="bg-gradient-to-br from-[#1A1A2E] to-transparent p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
-                <div className="flex items-center gap-3 mb-4 text-[#FFD700]">
-                  <Coffee size={20} />
-                  <h4 className="text-xs font-bold uppercase tracking-[0.2em]">Kondisi Umum</h4>
-                </div>
+                <h4 className="text-[#FFD700] text-xs font-bold uppercase tracking-[0.2em] mb-4">Kondisi Umum</h4>
                 <p className="text-gray-300 leading-relaxed font-poppins italic">"{fortune.umum}"</p>
               </section>
 
               <div className="grid gap-6">
-                <div className="bg-[#7F5AF0]/5 border border-[#7F5AF0]/20 p-7 rounded-[2.5rem] space-y-3">
-                  <h4 className="text-[#7F5AF0] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em]">
-                    <Heart size={16} fill="currentColor" /> Cinta
-                  </h4>
-                  <p className="text-sm text-gray-400 leading-relaxed font-poppins">{fortune.cinta}</p>
+                <div className="bg-[#7F5AF0]/5 border border-[#7F5AF0]/20 p-7 rounded-[2.5rem]">
+                  <h4 className="text-[#7F5AF0] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em] mb-3"><Heart size={16} /> Cinta</h4>
+                  <p className="text-sm text-gray-400 font-poppins">{fortune.cinta}</p>
                 </div>
-                <div className="bg-[#2CB67D]/5 border border-[#2CB67D]/20 p-7 rounded-[2.5rem] space-y-3">
-                  <h4 className="text-[#2CB67D] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em]">
-                    <Briefcase size={16} /> Karir
-                  </h4>
-                  <p className="text-sm text-gray-400 leading-relaxed font-poppins">{fortune.karir}</p>
-                </div>
-                <div className="bg-[#E53E3E]/5 border border-[#E53E3E]/20 p-7 rounded-[2.5rem] space-y-3">
-                  <h4 className="text-[#E53E3E] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em]">
-                    <Coins size={16} /> Keuangan
-                  </h4>
-                  <p className="text-sm text-gray-400 leading-relaxed font-poppins">{fortune.keuangan}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-                  <p className="text-[8px] font-bold uppercase text-gray-500 tracking-widest mb-2">Warna Hoki</p>
-                  <p className="text-sm font-bold uppercase text-[#FFD700] tracking-widest">{fortune.warna_hoki}</p>
-                </div>
-                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-                  <p className="text-[8px] font-bold uppercase text-gray-500 tracking-widest mb-2">Angka Hoki</p>
-                  <p className="text-sm font-bold uppercase text-[#FFD700] tracking-widest">{fortune.angka_hoki}</p>
+                <div className="bg-[#2CB67D]/5 border border-[#2CB67D]/20 p-7 rounded-[2.5rem]">
+                  <h4 className="text-[#2CB67D] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em] mb-3"><Briefcase size={16} /> Karir</h4>
+                  <p className="text-sm text-gray-400 font-poppins">{fortune.karir}</p>
                 </div>
               </div>
             </>
@@ -590,6 +596,212 @@ const ZodiacPage = () => {
         </motion.div>
       )}
       <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
+const NumerologyPage = () => {
+  const { setIsLoading } = useAppContext();
+  const [dob, setDob] = useState('');
+  const [reading, setReading] = useState<any>(null);
+  const [lifePathNumber, setLifePathNumber] = useState<number | null>(null);
+
+  const calculateLifePath = (dateString: string) => {
+    const digits = dateString.replace(/-/g, '').split('').map(Number);
+    let sum = digits.reduce((a, b) => a + b, 0);
+    while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
+      sum = sum.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+    }
+    return sum;
+  };
+
+  const handleCalculate = async () => {
+    if (!dob) return;
+    setIsLoading(true);
+    
+    // 1. Cek cache DB dulu
+    const dbReading = await fetchNumerologyFromDB(dob);
+    if (dbReading) {
+      const num = calculateLifePath(dob);
+      setLifePathNumber(num);
+      setReading(dbReading);
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. Jika tidak ada, panggil Gemini
+    const num = calculateLifePath(dob);
+    setLifePathNumber(num);
+    const result = await getNumerologyReading(num, dob);
+    
+    if (result) {
+      setReading(result);
+      // 3. Simpan ke DB untuk digunakan nanti
+      await saveNumerologyToDB(dob, num, result);
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-10">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight">Rahasia <span className="text-[#2CB67D]">Numerik</span></h2>
+        <p className="text-sm text-gray-500 font-poppins">Temukan takdir yang tertulis dalam angka kelahiranmu.</p>
+      </header>
+
+      {!reading ? (
+        <section className="bg-[#1A1A2E]/50 backdrop-blur-xl p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 block text-center">Tanggal Lahir Anda</label>
+            <input 
+              type="date" 
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              className="w-full bg-[#0F0F1A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-[#2CB67D]/50 transition-all font-poppins text-center" 
+            />
+          </div>
+          <button 
+            onClick={handleCalculate}
+            disabled={!dob}
+            className="w-full bg-[#2CB67D] hover:bg-[#259b6a] disabled:opacity-50 py-5 rounded-2xl font-bold text-white shadow-xl shadow-[#2CB67D]/20 transition-all uppercase tracking-widest text-xs active:scale-95 flex items-center justify-center gap-3"
+          >
+            <Zap size={18} /> Singkap Takdir
+          </button>
+        </section>
+      ) : (
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
+          <div className="text-center space-y-6">
+            <div className="relative inline-block">
+               <div className="absolute inset-0 bg-[#2CB67D] blur-3xl opacity-20 animate-pulse"></div>
+               <div className="relative w-32 h-32 bg-gradient-to-br from-[#2CB67D] to-[#1A1A2E] rounded-full flex items-center justify-center border-4 border-[#2CB67D]/30 shadow-2xl">
+                 <span className="text-6xl font-cinzel font-bold text-white">{lifePathNumber}</span>
+               </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#2CB67D]">Angka Jalur Hidup</p>
+              <h3 className="text-xl font-cinzel font-bold mt-2">Sang Pencari Makna</h3>
+            </div>
+          </div>
+
+          <div className="grid gap-6">
+            <div className="bg-[#1A1A2E] p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-[#2CB67D]"></div>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2"><Hash size={16} /> Kepribadian</h4>
+              <p className="text-gray-300 leading-relaxed font-poppins italic">"{reading.kepribadian}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+                <h4 className="text-[9px] font-bold uppercase text-[#2CB67D] tracking-widest mb-3 flex items-center gap-2"><Briefcase size={12}/> Karir</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.karir}</p>
+              </div>
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+                <h4 className="text-[9px] font-bold uppercase text-[#7F5AF0] tracking-widest mb-3 flex items-center gap-2"><Heart size={12}/> Asmara</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.asmara}</p>
+              </div>
+            </div>
+
+            <div className="bg-[#2CB67D]/10 border border-[#2CB67D]/20 p-8 rounded-[2.5rem]">
+              <h4 className="text-[#2CB67D] text-xs font-bold uppercase tracking-widest mb-4">Saran Spiritual</h4>
+              <p className="text-sm text-gray-300 font-poppins italic">{reading.saran}</p>
+            </div>
+
+            <div className="flex items-center justify-between bg-white/5 p-6 rounded-3xl border border-white/10">
+               <span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Batu Keberuntungan</span>
+               <span className="text-[#2CB67D] font-bold font-cinzel tracking-widest">{reading.batu_permata}</span>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-colors">Coba Tanggal Lain</button>
+        </motion.div>
+      )}
+
+      <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
+const TrendingPage = () => {
+  const { trendingDreams, setSelectedDream, setShowInterstitial, setCurrentPage } = useAppContext();
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8">
+      <header className="space-y-3">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight flex items-center gap-4">
+          <Flame className="text-[#E53E3E]" fill="currentColor" size={32} />
+          Mimpi <span className="text-[#E53E3E]">Trens</span>
+        </h2>
+        <p className="text-sm text-gray-500 font-poppins">Tafsir yang paling banyak dicari oleh pencari hidayah.</p>
+      </header>
+
+      <div className="space-y-4">
+        {trendingDreams.map((dream, idx) => (
+          <motion.div 
+            key={dream.slug}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: idx * 0.1 }}
+            onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }}
+            className="bg-[#1A1A2E]/60 border border-white/5 p-5 rounded-[2rem] flex items-center gap-5 hover:border-[#E53E3E]/30 cursor-pointer transition-all group"
+          >
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-lg font-cinzel font-bold text-gray-500 group-hover:text-[#E53E3E]">
+              {idx + 1}
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-base font-poppins line-clamp-1">{dream.judul}</h4>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{dream.kategori}</p>
+            </div>
+            <div className="text-[#E53E3E] flex items-center gap-1">
+              <TrendingUp size={14} />
+              <span className="text-[10px] font-bold">{dream.view_count}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+const FavoritePage = () => {
+  const { favorites, trendingDreams, setSelectedDream, setShowInterstitial, setCurrentPage } = useAppContext();
+  
+  // Filter mimpi favorit dari daftar trending atau buat dummy jika belum ada di list (seharusnya fetch by slug)
+  const favoriteItems = trendingDreams.filter(d => favorites.includes(d.slug));
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8">
+      <header className="space-y-3">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight flex items-center gap-4">
+          <Bookmark className="text-[#7F5AF0]" fill="currentColor" size={32} />
+          Mimpi <span className="text-[#7F5AF0]">Favorit</span>
+        </h2>
+        <p className="text-sm text-gray-500 font-poppins">Kumpulan tafsir yang Anda simpan untuk dibaca kembali.</p>
+      </header>
+
+      {favoriteItems.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {favoriteItems.map((dream) => (
+            <motion.div 
+              key={dream.slug}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }}
+              className="bg-[#1A1A2E]/40 border border-white/5 p-6 rounded-[2.5rem] space-y-4 hover:border-[#7F5AF0]/30 cursor-pointer transition-all shadow-xl"
+            >
+              <div className="w-10 h-10 bg-[#7F5AF0]/10 rounded-xl flex items-center justify-center text-[#7F5AF0]">
+                <Heart size={18} fill="currentColor" />
+              </div>
+              <h4 className="font-bold text-sm leading-tight line-clamp-2 font-poppins h-10">{dream.judul}</h4>
+              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#7F5AF0]">{dream.kategori}</span>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-4xl opacity-20">🖤</div>
+          <p className="text-gray-500 text-sm font-poppins italic max-w-[200px]">Belum ada mimpi yang ditandai sebagai favorit Anda.</p>
+          <button onClick={() => setCurrentPage(Page.HOME)} className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#7F5AF0] hover:underline">Mulai Mencari</button>
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -612,8 +824,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
           <h1 className="font-cinzel text-2xl font-bold tracking-[0.2em] text-white uppercase">Misteri<span className="text-[#7F5AF0]">+</span></h1>
         </div>
-        <button onClick={() => setCurrentPage(Page.ZODIAC)} className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${currentPage === Page.ZODIAC ? 'bg-[#FFD700]/10 border-[#FFD700]/50' : 'bg-[#1A1A2E] border-white/5'}`}>
-          <Sparkles size={20} className={currentPage === Page.ZODIAC ? 'text-[#FFD700]' : 'text-[#7F5AF0]'} />
+        <button onClick={() => setCurrentPage(Page.NUMEROLOGY)} className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${currentPage === Page.NUMEROLOGY ? 'bg-[#2CB67D]/10 border-[#2CB67D]/50' : 'bg-[#1A1A2E] border-white/5'}`}>
+          <Zap size={20} className={currentPage === Page.NUMEROLOGY ? 'text-[#2CB67D]' : 'text-[#7F5AF0]'} />
         </button>
       </header>
       
@@ -661,6 +873,9 @@ const AppContent = () => {
       case Page.HOME: return <HomePage />;
       case Page.DETAIL: return <DetailPage />;
       case Page.ZODIAC: return <ZodiacPage />;
+      case Page.NUMEROLOGY: return <NumerologyPage />;
+      case Page.TRENDING: return <TrendingPage />;
+      case Page.FAVORITE: return <FavoritePage />;
       default: return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="text-8xl filter drop-shadow-[0_0_20px_rgba(127,90,240,0.4)]">🔮</motion.div>
