@@ -1,17 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Misteri+ | Tafsir Mimpi & Zodiak</title>
+    
+    <!-- Favicon SVG -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+    
     <!-- Tailwind CSS -->
     <link href="https://unpkg.com/tailwindcss@^2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
     
     <script>
-      // Shim untuk simulasi environment variable di browser
-      // Masukkan API_KEY Gemini Anda di bawah ini
       window.process = { 
         env: { 
           API_KEY: "AIzaSyCyu75E5KZvWtG4LFwrHGRKDEesryy0a4s" 
@@ -34,7 +37,6 @@
 }
 </script>
 
-    <!-- Babel Standalone untuk menjalankan TypeScript langsung di browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script>
       if (window.Babel) {
@@ -49,7 +51,7 @@
     
     <script type="text/babel" data-presets="my-preset" data-type="module" src="index.tsx"></script>
 </head>
-<body class="bg-mystic-gradient min-h-screen pb-20 md:pb-0 text-white overflow-x-hidden">
+<body class="bg-[#0F0F1A] min-h-screen text-white overflow-x-hidden">
     <div id="root"></div>
 </body>
 </html>
