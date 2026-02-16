@@ -20,6 +20,16 @@ body {
   letter-spacing: 0.03em;
 }
 
+/* Force Date Input Picker Colors */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(48%) sepia(85%) saturate(3000%) hue-rotate(230deg) brightness(100%) contrast(100%);
+  cursor: pointer;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
 /* 1. Deep Abyss Background with Depth & Noise */
 body::before {
   content: "";
@@ -167,4 +177,14 @@ button:active {
 ::selection {
   background: var(--mystic-purple);
   color: white;
+}
+
+/* Premium 2026 Navigation Styles */
+@keyframes mysticPulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.05); }
+}
+
+.mystic-aura {
+  animation: mysticPulse 6s infinite ease-in-out;
 }

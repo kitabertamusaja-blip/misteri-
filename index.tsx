@@ -218,6 +218,7 @@ const getZodiacFortune = async (zodiac: string) => {
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            judul: { type: Type.STRING },
             umum: { type: Type.STRING },
             cinta: { type: Type.STRING },
             karir: { type: Type.STRING },
@@ -225,7 +226,7 @@ const getZodiacFortune = async (zodiac: string) => {
             warna_hoki: { type: Type.STRING },
             angka_hoki: { type: Type.STRING }
           },
-          required: ["umum", "cinta", "karir", "keuangan", "warna_hoki", "angka_hoki"]
+          required: ["judul", "umum", "cinta", "karir", "keuangan", "warna_hoki", "angka_hoki"]
         }
       }
     });
@@ -239,7 +240,7 @@ const getNumerologyReading = async (number: number, dob: string) => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Berikan pembacaan numerologi untuk Angka Jalur Hidup (Life Path Number) ${number} berdasarkan tanggal lahir ${dob}. Nuansa: Mistis dan mendalam.`,
+      contents: `Berikan pembacaan numerologi untuk Angka Jalur Hidup (Life Path Number) ${number} berdasarkan tanggal lahir ${dob}. Nuansa: Mistis and mendalam.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -269,11 +270,10 @@ const getPrimbonReading = async (dob: string) => {
       Tugas spesifik:
       1. Hitung Weton (Hari + Pasaran).
       2. Hitung Nilai Neptu.
-      3. Berikan makna filosofis hari tersebut (misal: Senin adalah Bunga, Selasa adalah Api, Rabu adalah Daun, Kamis adalah Angin, Jumat adalah Air, Sabtu adalah Tanah, Minggu adalah Mega/Langit).
+      3. Berikan makna filosofis hari tersebut.
       4. Berikan ramalan Watak, Keberuntungan, Rejeki.
       5. Berikan daftar Pekerjaan yang cocok, Jodoh yang cocok, Warna keberuntungan, dan Hari Baik.
       6. Berikan daftar Jenis Bisnis yang cocok untuk weton ini.
-      
       Bahasa: Indonesia. Nuansa: Tradisional, Mistis, Berwibawa.`,
       config: {
         responseMimeType: "application/json",
@@ -372,19 +372,51 @@ const useAppContext = () => {
 // --- UI COMPONENTS ---
 const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void }> = ({ type, onClose }) => {
   if (type === 'interstitial') {
+    const handleLanjutkan = () => {
+      window.open('https://www.google.com/search?q=misteri+mistis+spiritual', '_blank');
+      onClose?.();
+    };
+
     return (
       <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6"
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }}
+        style={{ zIndex: 100000 }} 
+        className="fixed inset-0 bg-black/98 backdrop-blur-2xl flex items-center justify-center p-6 pointer-events-auto"
       >
-        <div className="mystic-card w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl relative border-none">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white p-2 z-10"><X size={20} /></button>
-          <div className="bg-[#7F5AF0] p-2.5 text-[10px] font-bold text-center tracking-widest text-white uppercase font-poppins">Pesan Mistis</div>
-          <div className="p-10 text-center space-y-6">
-            <div className="w-24 h-24 bg-[#2D284D]/50 rounded-3xl mx-auto flex items-center justify-center text-4xl shadow-lg shadow-[#7F5AF0]/20 animate-floating">🌟</div>
-            <h3 className="text-2xl font-bold font-cinzel text-white tracking-wider glow-text">AKSES PREMIUM</h3>
-            <p className="text-sm text-gray-400 leading-relaxed font-poppins">Buka kunci ramalan tak terbatas dan hilangkan iklan selamanya hanya dengan Rp 15rb/bulan.</p>
-            <button onClick={onClose} className="w-full bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] py-4 rounded-2xl font-bold text-white shadow-xl shadow-[#7F5AF0]/30 transition-all uppercase tracking-widest text-xs font-poppins">Lanjutkan</button>
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose?.();
+          }} 
+          className="absolute top-10 right-10 text-white/90 hover:text-white p-6 z-[100050] bg-[#7F5AF0]/30 hover:bg-[#7F5AF0]/50 rounded-full flex items-center justify-center cursor-pointer transition-all shadow-2xl active:scale-90 border border-white/20"
+          aria-label="Tutup Iklan"
+        >
+          <X size={36} strokeWidth={3} />
+        </button>
+
+        <div 
+          className="mystic-card w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl relative border-none pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-[#7F5AF0] p-3 text-[10px] font-bold text-center tracking-widest text-white uppercase font-poppins relative z-10">Pesan Mistis</div>
+          
+          <div className="p-10 text-center space-y-8 relative z-20">
+            <div className="w-28 h-28 bg-[#2D284D]/50 rounded-3xl mx-auto flex items-center justify-center text-5xl shadow-lg shadow-[#7F5AF0]/20 animate-floating">🌟</div>
+            
+            <div className="space-y-4">
+              <h3 className="text-3xl font-bold font-cinzel text-white tracking-wider glow-text uppercase">Pesan Gaib</h3>
+              <p className="text-sm text-gray-400 leading-relaxed font-poppins px-2">Lihat detail pesan mistis untuk menyingkap tabir masa depan Anda.</p>
+            </div>
+            
+            <button 
+              onClick={handleLanjutkan} 
+              className="w-full bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] py-5 rounded-2xl font-bold text-white shadow-xl shadow-[#7F5AF0]/40 transition-all uppercase tracking-widest text-xs font-poppins active:scale-95 pointer-events-auto z-[100001] cursor-pointer"
+            >
+              Lanjutkan
+            </button>
           </div>
         </div>
       </motion.div>
@@ -446,7 +478,7 @@ const HomePage = () => {
       className="py-6 space-y-12"
     >
       <section className="space-y-10 text-center pt-8">
-        <h2 className="text-5xl font-cinzel font-bold leading-[1.1] tracking-tight">
+        <h2 className="text-5xl font-cinzel font-bold leading-[1.1] tracking-tight text-white">
           Pesan <br/>
           <span className="text-[#7F5AF0] glow-text">Semesta</span>
         </h2>
@@ -489,7 +521,7 @@ const HomePage = () => {
       <section className="space-y-6">
         <div className="flex justify-between items-end px-2">
           <div>
-            <h3 className="text-xl font-cinzel font-bold tracking-wider uppercase flex items-center gap-3">
+            <h3 className="text-xl font-cinzel font-bold tracking-wider uppercase flex items-center gap-3 text-white">
               <Flame size={20} className="text-[#7F5AF0]" />
               Hits
             </h3>
@@ -512,7 +544,7 @@ const HomePage = () => {
                 <Sparkles size={22} />
               </div>
               <div className="space-y-2">
-                <p className="font-bold text-lg leading-tight h-14 line-clamp-2 font-poppins">{dream.judul}</p>
+                <p className="font-bold text-lg leading-tight h-14 line-clamp-2 font-poppins text-white">{dream.judul}</p>
                 <p className="text-[10px] text-[#7F5AF0] font-bold uppercase tracking-widest">{dream.kategori}</p>
               </div>
             </motion.div>
@@ -617,7 +649,7 @@ const ZodiacPage = () => {
       {!selectedZodiac ? (
         <>
           <header className="space-y-4 text-center">
-            <h2 className="text-4xl font-cinzel font-bold leading-tight">Garis <span className="gold-glow-text">Bintang</span></h2>
+            <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Garis <span className="gold-glow-text">Bintang</span></h2>
             <p className="text-sm text-gray-500 font-poppins px-8">Sentuh rasi bintangmu untuk menyingkap nasib yang tertulis di langit.</p>
           </header>
 
@@ -680,6 +712,119 @@ const ZodiacPage = () => {
   );
 };
 
+const NumerologyPage = () => {
+  const { setIsLoading } = useAppContext();
+  const [dob, setDob] = useState('');
+  const [reading, setReading] = useState<any>(null);
+  const [lifePath, setLifePath] = useState<number | null>(null);
+
+  const calculateLifePath = (dateStr: string) => {
+    const digits = dateStr.replace(/\D/g, '');
+    let sum = digits.split('').reduce((acc, d) => acc + parseInt(d), 0);
+    while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
+      sum = sum.toString().split('').reduce((acc, d) => acc + parseInt(d), 0);
+    }
+    return sum;
+  };
+
+  const handleCalculate = async () => {
+    if (!dob) return;
+    setIsLoading(true);
+    const lp = calculateLifePath(dob);
+    setLifePath(lp);
+
+    const dbReading = await fetchNumerologyFromDB(dob);
+    if (dbReading) {
+      setReading(dbReading);
+    } else {
+      const result = await getNumerologyReading(lp, dob);
+      if (result) {
+        setReading(result);
+        await saveNumerologyToDB(dob, lp, result);
+      }
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Takdir <span className="text-[#2CB67D] drop-shadow-[0_0_10px_rgba(44,182,125,0.4)]">Numerik</span></h2>
+        <p className="text-sm text-gray-500 font-poppins px-6">Singkap kode rahasia yang tersembunyi dalam angka kelahiran Anda.</p>
+      </header>
+
+      {!reading ? (
+        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none shadow-2xl">
+          <div className="space-y-6 text-center">
+            <label className="text-[10px] font-bold uppercase tracking-[0.5em] text-gray-600 block">Kala Kelahiran</label>
+            <input 
+              type="date" 
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              className="w-full bg-[#0F0F1A]/80 border border-[#7F5AF0]/30 rounded-[2rem] py-7 px-8 text-[#A78BFA] focus:outline-none focus:border-[#7F5AF0] transition-all font-poppins text-center text-2xl shadow-inner" 
+              style={{ color: '#A78BFA', colorScheme: 'dark' }}
+            />
+          </div>
+          <button 
+            onClick={handleCalculate}
+            disabled={!dob}
+            className="w-full bg-[#2CB67D] hover:bg-[#249e6b] disabled:opacity-50 py-6 rounded-[2.5rem] font-bold text-white shadow-xl shadow-[#2CB67D]/20 transition-all uppercase tracking-[0.3em] text-xs active:scale-95 flex items-center justify-center gap-4"
+          >
+            <Zap size={24} /> Hitung Angka Takdir
+          </button>
+        </section>
+      ) : (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+           <div className="text-center space-y-10">
+            <div className="relative inline-block">
+               <div className="absolute inset-0 bg-[#2CB67D] blur-[100px] opacity-25 animate-pulse"></div>
+               <div className="relative w-72 h-40 bg-gradient-to-br from-[#2CB67D] to-[#1A1A2E] rounded-[3.5rem] flex flex-col items-center justify-center border-4 border-[#2CB67D]/30 shadow-2xl px-8">
+                 <span className="text-7xl font-cinzel font-bold text-white tracking-widest glow-text">{lifePath}</span>
+                 <div className="w-full h-[1px] bg-white/10 my-4"></div>
+                 <span className="text-[12px] text-white/90 font-bold uppercase tracking-[0.4em]">Life Path Number</span>
+               </div>
+            </div>
+          </div>
+
+          <div className="grid gap-8">
+            <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#2CB67D] to-transparent rounded-full"></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Kepribadian Utama</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins italic text-xl text-white">"{reading.kepribadian}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#2CB67D] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Karir</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.karir}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#7F5AF0] tracking-[0.3em] flex items-center gap-3"><Heart size={18}/> Asmara</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.asmara}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card bg-[#2CB67D]/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-[#2CB67D] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Sparkles size={22} /> Batu Permata Hoki
+              </h4>
+              <p className="text-xl text-gray-300 font-poppins leading-relaxed italic text-white">"{reading.batu_permata}"</p>
+            </div>
+
+             <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Saran Semesta</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins text-lg text-white">{reading.saran}</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Hitung Ulang</button>
+        </motion.div>
+      )}
+      <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
 const JavaHoroscopePage = () => {
   const { setIsLoading } = useAppContext();
   const [dob, setDob] = useState('');
@@ -704,7 +849,7 @@ const JavaHoroscopePage = () => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
-        <h2 className="text-4xl font-cinzel font-bold leading-tight">Primbon <span className="text-[#FF7E33] drop-shadow-[0_0_10px_rgba(255,126,51,0.4)]">Jawa</span></h2>
+        <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Primbon <span className="text-[#FF7E33] drop-shadow-[0_0_10px_rgba(255,126,51,0.4)]">Jawa</span></h2>
         <p className="text-sm text-gray-500 font-poppins px-6">Menyingkap serat kehidupan melalui hitungan weton leluhur nusantara.</p>
       </header>
 
@@ -716,7 +861,8 @@ const JavaHoroscopePage = () => {
               type="date" 
               value={dob}
               onChange={(e) => setDob(e.target.value)}
-              className="w-full bg-[#0F0F1A]/80 border border-orange-500/10 rounded-[2rem] py-7 px-8 text-white focus:outline-none focus:border-orange-500/40 transition-all font-poppins text-center text-2xl shadow-inner" 
+              className="w-full bg-[#0F0F1A]/80 border border-[#7F5AF0]/30 rounded-[2rem] py-7 px-8 text-[#A78BFA] focus:outline-none focus:border-[#7F5AF0] transition-all font-poppins text-center text-2xl shadow-inner" 
+              style={{ color: '#A78BFA', colorScheme: 'dark' }}
             />
           </div>
           <button 
@@ -746,7 +892,7 @@ const JavaHoroscopePage = () => {
           </div>
 
           <div className="grid gap-8">
-            <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
+            <div className="mystic-card p-12 rounded-[3.5rem] relative border-none text-white">
               <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#FF7E33] to-transparent rounded-full"></div>
               <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Watak Bawaan</h4>
               <p className="text-gray-200 leading-relaxed font-poppins italic text-xl">"{reading.watak}"</p>
@@ -755,22 +901,22 @@ const JavaHoroscopePage = () => {
             <div className="grid grid-cols-2 gap-5">
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
                 <h4 className="text-[10px] font-bold uppercase text-[#FF7E33] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Pekerjaan</h4>
-                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.pekerjaan}</p>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.pekerjaan}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
                 <h4 className="text-[10px] font-bold uppercase text-amber-500 tracking-[0.3em] flex items-center gap-3"><Store size={18}/> Bisnis</h4>
-                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.bisnis}</p>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.bisnis}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
                 <h4 className="text-[10px] font-bold uppercase text-[#7F5AF0] tracking-[0.3em] flex items-center gap-3"><Users size={18}/> Jodoh</h4>
-                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.jodoh}</p>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.jodoh}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
                 <h4 className="text-[10px] font-bold uppercase text-yellow-500 tracking-[0.3em] flex items-center gap-3"><Clock size={18}/> Hari Baik</h4>
-                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.hari_baik}</p>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.hari_baik}</p>
               </div>
             </div>
 
@@ -778,7 +924,7 @@ const JavaHoroscopePage = () => {
               <h4 className="text-[#FF7E33] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
                 <Coins size={22} /> Rejeki
               </h4>
-              <p className="text-xl text-gray-300 font-poppins leading-relaxed italic">"{reading.rejeki}"</p>
+              <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.rejeki}"</p>
             </div>
           </div>
 
@@ -833,31 +979,54 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <main className="flex-1 px-6 pb-40">
         {children}
       </main>
+    </div>
+  );
+};
 
-      <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-[#1A1A2E]/65 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(127,90,240,0.15)] h-22 flex items-center justify-around z-50">
-        {[
-          { id: Page.HOME, icon: Moon, label: 'Ritual' },
-          { id: Page.TRENDING, icon: TrendingUp, label: 'Trens' },
-          { id: Page.FAVORITE, icon: Heart, label: 'Favorit' }
-        ].map((item) => {
+// --- NAVIGATION COMPONENT ---
+const PremiumBottomNav = () => {
+  const { currentPage, setCurrentPage } = useAppContext();
+  
+  const navItems = [
+    { id: Page.HOME, icon: Moon, label: 'Ritual' },
+    { id: Page.TRENDING, icon: TrendingUp, label: 'Trens' },
+    { id: Page.FAVORITE, icon: Heart, label: 'Favorit' }
+  ];
+
+  return (
+    <div className="fixed bottom-8 inset-x-0 flex justify-center z-[9000] pointer-events-none">
+      <nav className="mystic-card w-[92%] max-w-[420px] pointer-events-auto h-[88px] flex items-center justify-around overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.8)] border-white/10 bg-[#1A1A2E]/80 backdrop-blur-3xl">
+        
+        {/* Mystic Aura Glow */}
+        <div className="absolute -bottom-6 w-48 h-16 bg-[#7F5AF0] blur-3xl opacity-20 mystic-aura"></div>
+
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setCurrentPage(item.id)}
-              className="relative flex flex-col items-center justify-center w-20 group"
+              className={`relative flex flex-col items-center justify-center w-20 group transition-all duration-500 pointer-events-auto`}
             >
               {isActive && (
                 <motion.div
                   layoutId="active-pill"
-                  className="absolute inset-0 bg-[#7F5AF0]/20 rounded-2xl"
+                  className="absolute inset-x-2 inset-y-1 bg-[#7F5AF0]/15 rounded-2xl"
                   transition={{ type: "spring", stiffness: 400, damping: 28 }}
                 />
               )}
-              <div className={`relative z-10 transition-all duration-500 flex flex-col items-center ${isActive ? "text-[#7F5AF0] scale-125" : "text-gray-500 group-hover:text-gray-300"}`}>
-                <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={`text-[9px] font-bold tracking-[0.3em] mt-2 transition-all duration-300 uppercase ${isActive ? "text-white opacity-100" : "opacity-0"}`}>
+              <div className={`relative z-10 flex flex-col items-center transition-all duration-500 ${
+                isActive ? "text-[#7F5AF0] scale-110 drop-shadow-[0_0_12px_#7F5AF0]" : "text-gray-400 group-hover:text-white"
+              }`}>
+                <Icon 
+                  size={26} 
+                  strokeWidth={isActive ? 2.5 : 2} 
+                  className="transition-all duration-500 group-hover:scale-110"
+                />
+                <span className={`text-[9px] font-bold tracking-[0.3em] mt-2 uppercase transition-all duration-300 ${
+                  isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+                }`}>
                   {item.label}
                 </span>
               </div>
@@ -888,12 +1057,13 @@ const AppContent = () => {
       case Page.HOME: return <HomePage />;
       case Page.DETAIL: return <DetailPage />;
       case Page.ZODIAC: return <ZodiacPage />;
+      case Page.NUMEROLOGY: return <NumerologyPage />;
       case Page.JAVA_HOROSCOPE: return <JavaHoroscopePage />;
       case Page.TRENDING: return (
         <div className="py-6 space-y-12">
           <header className="space-y-4 text-center">
-            <h2 className="text-4xl font-cinzel font-bold leading-tight">Mimpi <span className="text-[#E53E3E] drop-shadow-[0_0_10px_rgba(229,62,62,0.4)]">Hits</span></h2>
-            <p className="text-sm text-gray-500 font-poppins px-8">Tafsir yang paling sering menembus tabir kesadaran kolektif.</p>
+            <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Mimpi <span className="text-[#E53E3E] drop-shadow-[0_0_10px_rgba(229,62,62,0.4)]">Hits</span></h2>
+            <p className="text-sm text-gray-500 font-poppins px-8 text-white/60">Tafsir yang paling sering menembus tabir kesadaran kolektif.</p>
           </header>
           <div className="space-y-5 px-2">
             {[1,2,3,4,5,6].map(i => (
@@ -919,7 +1089,7 @@ const AppContent = () => {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 18, repeat: Infinity, ease: "linear" }} className="text-[10rem] filter drop-shadow-[0_0_40px_rgba(127,90,240,0.6)]">🔮</motion.div>
           <div className="space-y-6">
             <h2 className="text-5xl font-cinzel font-bold tracking-[0.4em] uppercase text-[#7F5AF0] glow-text">RITUAL</h2>
-            <p className="text-gray-500 max-w-[320px] text-base italic font-poppins leading-relaxed mx-auto">Ruang mistis ini sedang disiapkan oleh para oracle kami. Harap menunggu hingga energi terkumpul sempurna.</p>
+            <p className="text-gray-500 max-w-[320px] text-base italic font-poppins leading-relaxed mx-auto text-white/60">Ruang mistis ini sedang disiapkan oleh para oracle kami. Harap menunggu hingga energi terkumpul sempurna.</p>
           </div>
           <button onClick={() => window.location.reload()} className="text-[11px] font-bold uppercase text-white/20 tracking-[0.5em] hover:text-[#7F5AF0] transition-all">Muat Ulang Dimensi</button>
         </div>
@@ -928,36 +1098,48 @@ const AppContent = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <Layout>
+        {isLoading && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            style={{ zIndex: 80000 }} 
+            className="fixed inset-0 bg-[#050508]/98 backdrop-blur-2xl flex flex-col items-center justify-center pointer-events-auto"
+          >
+            <div className="relative">
+               <div className="w-40 h-40 border-[1px] border-[#7F5AF0]/10 border-t-[#7F5AF0] rounded-full animate-spin"></div>
+               <div className="absolute inset-0 flex items-center justify-center text-5xl animate-pulse">✨</div>
+            </div>
+            <p className="font-cinzel text-2xl tracking-[0.5em] text-[#7F5AF0] mt-16 animate-pulse uppercase glow-text">{loadingMessages[msgIdx]}</p>
+          </motion.div>
+        )}
+        
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={currentPage} 
+            initial={{ opacity: 0, filter: 'blur(15px)', scale: 1.03 }} 
+            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }} 
+            exit={{ opacity: 0, filter: 'blur(15px)', scale: 0.97 }} 
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {renderPage()}
+          </motion.div>
+        </AnimatePresence>
+      </Layout>
+
+      <PremiumBottomNav />
+
       <AnimatePresence>
-        {showInterstitial && <AdBanner type="interstitial" onClose={() => setShowInterstitial(false)} />}
+        {showInterstitial && (
+          <AdBanner 
+            type="interstitial" 
+            onClose={() => setShowInterstitial(false)} 
+          />
+        )}
       </AnimatePresence>
-      
-      {isLoading && (
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-[#050508]/98 backdrop-blur-2xl flex flex-col items-center justify-center"
-        >
-          <div className="relative">
-             <div className="w-40 h-40 border-[1px] border-[#7F5AF0]/10 border-t-[#7F5AF0] rounded-full animate-spin"></div>
-             <div className="absolute inset-0 flex items-center justify-center text-5xl animate-pulse">✨</div>
-          </div>
-          <p className="font-cinzel text-2xl tracking-[0.5em] text-[#7F5AF0] mt-16 animate-pulse uppercase glow-text">{loadingMessages[msgIdx]}</p>
-        </motion.div>
-      )}
-      
-      <AnimatePresence mode="wait">
-        <motion.div 
-          key={currentPage} 
-          initial={{ opacity: 0, filter: 'blur(15px)', scale: 1.03 }} 
-          animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }} 
-          exit={{ opacity: 0, filter: 'blur(15px)', scale: 0.97 }} 
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {renderPage()}
-        </motion.div>
-      </AnimatePresence>
-    </Layout>
+    </>
   );
 };
 
