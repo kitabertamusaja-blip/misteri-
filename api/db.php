@@ -24,9 +24,9 @@ header("Content-Type: application/json; charset=UTF-8");
 
 // 4. Konfigurasi Database
 $host = "127.0.0.1";
-$db_name = "fach6357_misteri";
+$db_name = "fach6357_mistery";
 $username = "fach6357_mridla";
-$password = "@@22Hari11Bulan"; // Menggunakan password yang sebelumnya dikonfirmasi berhasil
+$password = "22hari11bulan"; // Menggunakan password yang sebelumnya dikonfirmasi berhasil
 
 try {
     $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
