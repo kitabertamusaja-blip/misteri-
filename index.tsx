@@ -31,7 +31,7 @@ export enum Page {
 }
 
 export interface Dream {
-  id: number;
+  id?: number;
   slug: string;
   judul: string;
   kategori: string;
@@ -57,34 +57,13 @@ export interface ZodiacInfo {
 const ICONS = {
   Dream: Moon,
   Zodiac: Sparkles,
-  Test: Brain,
-  Trending: TrendingUp,
   Search: Search,
   Heart: Heart,
   Share: Share2,
   Next: ChevronRight,
-  User: User,
   Star: Star,
-  Moon: Moon,
-  Sun: Sun
+  Moon: Moon
 };
-
-const MOCK_DREAMS: Dream[] = [
-  {
-    id: 1, slug: 'mimpi-ular', judul: 'Mimpi Melihat Ular Besar', kategori: 'Hewan',
-    ringkasan: 'Mimpi ini sering dikaitkan dengan godaan atau perubahan besar dalam hidup.',
-    tafsir_positif: 'Menandakan penyembuhan, transformasi diri, dan kebijaksanaan yang akan datang.',
-    tafsir_negatif: 'Bisa berarti adanya pengkhianatan dari orang terdekat atau rasa takut yang terpendam.',
-    angka: '12, 45, 89', view_count: 1540
-  },
-  {
-    id: 2, slug: 'mimpi-jatuh', judul: 'Mimpi Terjatuh dari Ketinggian', kategori: 'Kejadian',
-    ringkasan: 'Simbol hilangnya kendali atau rasa cemas terhadap situasi tertentu.',
-    tafsir_positif: 'Kesempatan untuk melepaskan beban lama dan memulai dari awal dengan kerendahan hati.',
-    tafsir_negatif: 'Peringatan akan kegagalan rencana atau ketidakstabilan emosional.',
-    angka: '08, 33, 72', view_count: 980
-  }
-];
 
 const ZODIAC_LIST: ZodiacInfo[] = [
   { id: 1, nama: 'Aries', tanggal: '21 Mar - 19 Apr', icon: '♈', deskripsi: 'Penuh energi.', cinta: 'Gairah meningkat.', karir: 'Fokus target.', keuangan: 'Waspada.' },
@@ -93,10 +72,37 @@ const ZODIAC_LIST: ZodiacInfo[] = [
   { id: 4, nama: 'Cancer', tanggal: '21 Jun - 22 Jul', icon: '♋', deskripsi: 'Intuitif.', cinta: 'Keluarga.', karir: 'Sensitif.', keuangan: 'Hemat.' }
 ];
 
-// --- SERVICES ---
+// --- SERVICES & API ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const PROD_API_URL = 'https://www.misteri.faciltrix.com/api'; 
+const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost/misteri-api' : PROD_API_URL; 
 
-const getDynamicDreamInterpretation = async (userPrompt: string) => {
+const fetchFromDB = async (query: string = '') => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/search.php?q=${encodeURIComponent(query)}`);
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (e) {
+    console.error("Fetch Error:", e);
+    return [];
+  }
+};
+
+const saveMimpiToDB = async (dreamData: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/save-mimpi.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dreamData)
+    });
+    return await response.json();
+  } catch (e) { 
+    console.error("DB Sync Error", e);
+    return null;
+  }
+};
+
+const getAIInterpretation = async (userPrompt: string) => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -124,45 +130,46 @@ const getDynamicDreamInterpretation = async (userPrompt: string) => {
   }
 };
 
-const PROD_API_URL = 'https://www.misteri.faciltrix.com/api'; 
-const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost/misteri-api' : PROD_API_URL; 
-
-const saveMimpiToDB = async (dreamData: any) => {
-  try {
-    await fetch(`${API_BASE_URL}/save-mimpi.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dreamData)
-    });
-  } catch (e) { console.error("DB Sync Error", e); }
-};
-
 // --- CONTEXT ---
 interface AppContextType {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
-  favorites: number[];
-  toggleFavorite: (id: number) => void;
+  favorites: string[];
+  toggleFavorite: (slug: string) => void;
   selectedDream: Dream | null;
   setSelectedDream: (dream: Dream | null) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
   showInterstitial: boolean;
   setShowInterstitial: (show: boolean) => void;
+  trendingDreams: Dream[];
+  refreshTrending: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.HOME);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedDream, setSelectedDream] = useState<Dream | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showInterstitial, setShowInterstitial] = useState(false);
+  const [trendingDreams, setTrendingDreams] = useState<Dream[]>([]);
 
-  const toggleFavorite = (id: number) => {
+  const refreshTrending = async () => {
+    const data = await fetchFromDB();
+    if (data && Array.isArray(data)) setTrendingDreams(data);
+  };
+
+  useEffect(() => {
+    refreshTrending();
+    const saved = localStorage.getItem('misteri_plus_favs');
+    if (saved) setFavorites(JSON.parse(saved));
+  }, []);
+
+  const toggleFavorite = (slug: string) => {
     setFavorites(prev => {
-      const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+      const next = prev.includes(slug) ? prev.filter(f => f !== slug) : [...prev, slug];
       localStorage.setItem('misteri_plus_favs', JSON.stringify(next));
       return next;
     });
@@ -174,7 +181,8 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       favorites, toggleFavorite,
       selectedDream, setSelectedDream,
       isLoading, setIsLoading,
-      showInterstitial, setShowInterstitial
+      showInterstitial, setShowInterstitial,
+      trendingDreams, refreshTrending
     }}>
       {children}
     </AppContext.Provider>
@@ -193,20 +201,13 @@ const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void
     return (
       <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-6 backdrop-blur-md">
         <div className="bg-[#1A1A2E] w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-[#7F5AF0]/30 relative">
-           <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white">
-             <X size={20} />
-           </button>
+           <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
           <div className="bg-[#7F5AF0] p-2 text-[10px] font-bold text-center tracking-widest text-white uppercase">Sponsor</div>
           <div className="p-8 text-center space-y-5">
             <div className="w-16 h-16 bg-[#7F5AF0]/20 rounded-2xl mx-auto flex items-center justify-center text-3xl">🔮</div>
             <h3 className="text-xl font-bold font-cinzel">Buka Tabir Masa Depan</h3>
-            <p className="text-sm text-gray-400">Dapatkan akses eksklusif ke ramalan bintang harian dan konsultasi aura spiritual.</p>
-            <button 
-              onClick={onClose}
-              className="w-full bg-[#7F5AF0] hover:bg-[#6b48d1] py-3 rounded-xl font-bold transition-all shadow-lg shadow-[#7F5AF0]/20 active:scale-95 text-white"
-            >
-              Lanjutkan ke Tafsir
-            </button>
+            <p className="text-sm text-gray-400">Dapatkan akses eksklusif ke ramalan bintang harian dan konsultasi spiritual.</p>
+            <button onClick={onClose} className="w-full bg-[#7F5AF0] hover:bg-[#6b48d1] py-3 rounded-xl font-bold text-white shadow-lg shadow-[#7F5AF0]/20 active:scale-95">Lanjutkan ke Tafsir</button>
           </div>
         </div>
       </div>
@@ -215,7 +216,7 @@ const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void
   return (
     <div className="w-full h-24 bg-[#1A1A2E]/50 border border-[#7F5AF0]/10 rounded-2xl flex items-center justify-center my-4 overflow-hidden relative group cursor-pointer">
       <div className="absolute top-2 left-2 text-[8px] text-gray-600 font-bold uppercase tracking-widest">Ad</div>
-      <div className="text-gray-500 font-bold text-sm tracking-[0.2em] group-hover:text-[#7F5AF0] transition-colors">MISTERI+ PRO</div>
+      <div className="text-gray-500 font-bold text-sm tracking-[0.2em] group-hover:text-[#7F5AF0] transition-colors uppercase">Misteri+ Premium</div>
     </div>
   );
 };
@@ -236,8 +237,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navItems = [
     { id: Page.HOME, icon: ICONS.Dream, label: 'Home' },
     { id: Page.SEARCH, icon: ICONS.Search, label: 'Cari' },
-    { id: Page.TRENDING, icon: ICONS.Trending, label: 'Hits' },
-    { id: Page.FAVORITE, icon: ICONS.Heart, label: 'Favorit' }
+    { id: Page.TRENDING, icon: TrendingUp, label: 'Hits' },
+    { id: Page.FAVORITE, icon: Heart, label: 'Favorit' }
   ];
 
   return (
@@ -250,22 +251,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <h1 className="font-cinzel text-xl font-bold tracking-widest text-white">MISTERI<span className="text-[#7F5AF0]">+</span></h1>
         </div>
         <button onClick={() => setCurrentPage(Page.ZODIAC)} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors">
-          <ICONS.Zodiac size={20} className="text-[#7F5AF0]" />
+          <Sparkles size={20} className="text-[#7F5AF0]" />
         </button>
       </header>
-
       <main className="flex-1 px-5 pb-24 overflow-y-auto">{children}</main>
-
       <nav className="fixed bottom-0 left-0 right-0 h-20 bg-[#0F0F1A]/95 backdrop-blur-xl border-t border-white/5 flex items-center justify-around z-50 max-w-md mx-auto px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
           return (
-            <button
-              key={item.id}
-              onClick={() => setCurrentPage(item.id)}
-              className={`flex flex-col items-center gap-1.5 transition-all w-14 ${isActive ? 'text-[#7F5AF0]' : 'text-gray-500'}`}
-            >
+            <button key={item.id} onClick={() => setCurrentPage(item.id)} className={`flex flex-col items-center gap-1.5 transition-all w-14 ${isActive ? 'text-[#7F5AF0]' : 'text-gray-500'}`}>
               <div className={`p-1 ${isActive ? 'scale-110' : 'hover:scale-105'} transition-transform`}>
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               </div>
@@ -280,88 +275,83 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // --- PAGES ---
 const Home = () => {
-  const { setCurrentPage, setSelectedDream, setShowInterstitial, setIsLoading } = useAppContext();
+  const { setCurrentPage, setSelectedDream, setShowInterstitial, setIsLoading, trendingDreams, refreshTrending } = useAppContext();
   const [searchInput, setSearchInput] = useState('');
 
   const handleSearch = async () => {
     if (!searchInput.trim()) return;
     setIsLoading(true);
-    const result = await getDynamicDreamInterpretation(searchInput);
-    setIsLoading(true); // Artificial delay for effect
-    setTimeout(() => {
-        if (result) {
-            setSelectedDream({ ...result, id: Date.now(), view_count: 1 });
-            saveMimpiToDB(result);
-            setShowInterstitial(true);
-            setCurrentPage(Page.DETAIL);
-        }
+    
+    // 1. Cek di Database dulu
+    const dbResults = await fetchFromDB(searchInput);
+    if (dbResults && dbResults.length > 0) {
+        // Jika ada di DB, ambil yang paling relevan (index 0)
+        const found = dbResults[0];
+        setSelectedDream(found);
+        // Update view count di DB
+        saveMimpiToDB(found); 
+        setShowInterstitial(true);
+        setCurrentPage(Page.DETAIL);
         setIsLoading(false);
-    }, 1500);
+        return;
+    }
+
+    // 2. Jika tidak ada di DB, tanya AI
+    const result = await getAIInterpretation(searchInput);
+    if (result) {
+        const dreamData = { ...result, view_count: 1 };
+        setSelectedDream(dreamData);
+        // Simpan hasil AI ke DB untuk orang berikutnya
+        await saveMimpiToDB(dreamData);
+        refreshTrending(); // Segarkan list populer
+        setShowInterstitial(true);
+        setCurrentPage(Page.DETAIL);
+    }
+    setIsLoading(false);
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8">
       <div className="space-y-4">
-        <h2 className="text-4xl font-cinzel font-bold leading-tight">
-          Apa pesan <br/><span className="text-[#7F5AF0] drop-shadow-[0_0_10px_#7F5AF0]">Semesta</span> bagimu?
-        </h2>
+        <h2 className="text-4xl font-cinzel font-bold leading-tight">Apa pesan <br/><span className="text-[#7F5AF0] drop-shadow-[0_0_10px_#7F5AF0]">Semesta</span> bagimu?</h2>
         <div className="relative group">
-          <input 
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="Ketik mimpimu semalam..."
-            className="w-full bg-[#1A1A2E] border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:border-[#7F5AF0]/50 transition-all shadow-inner"
-          />
+          <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="Ketik mimpimu semalam..." className="w-full bg-[#1A1A2E] border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white focus:outline-none focus:border-[#7F5AF0]/50 transition-all shadow-inner" />
           <ICONS.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
-          <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#7F5AF0] rounded-xl hover:bg-[#6b48d1] transition-colors shadow-lg shadow-[#7F5AF0]/20">
-            <ICONS.Next size={16} className="text-white" />
-          </button>
+          <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#7F5AF0] rounded-xl hover:bg-[#6b48d1] transition-colors shadow-lg shadow-[#7F5AF0]/20 text-white"><ICONS.Next size={16} /></button>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: 'Tafsir', id: Page.HOME, icon: '🔮' },
-          { label: 'Zodiak', id: Page.ZODIAC, icon: '♈' },
-          { label: 'Ramal', id: Page.TEST, icon: '🧠' },
-          { label: 'Hits', id: Page.TRENDING, icon: '🔥' }
-        ].map(cat => (
+        {[{ label: 'Tafsir', id: Page.HOME, icon: '🔮' }, { label: 'Zodiak', id: Page.ZODIAC, icon: '♈' }, { label: 'Ramal', id: Page.TRENDING, icon: '🧠' }, { label: 'Hits', id: Page.TRENDING, icon: '🔥' }].map(cat => (
           <button key={cat.label} onClick={() => setCurrentPage(cat.id)} className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 bg-[#1A1A2E] rounded-2xl flex items-center justify-center border border-white/5 hover:border-[#7F5AF0]/30 transition-all">
-              <span className="text-2xl">{cat.icon}</span>
-            </div>
+            <div className="w-14 h-14 bg-[#1A1A2E] rounded-2xl flex items-center justify-center border border-white/5 hover:border-[#7F5AF0]/30 transition-all"><span className="text-2xl">{cat.icon}</span></div>
             <span className="text-[10px] font-bold uppercase text-gray-500 tracking-wider">{cat.label}</span>
           </button>
         ))}
       </div>
 
       <div>
-        <SectionTitle rightElement={<button className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest">Semua</button>}>
-          Mimpi Populer
-        </SectionTitle>
+        <SectionTitle rightElement={<button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest">Semua</button>}>Mimpi Populer</SectionTitle>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-          {MOCK_DREAMS.map(dream => (
-            <div 
-              key={dream.id} 
-              onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }}
-              className="flex-shrink-0 w-44 bg-[#1A1A2E] p-5 rounded-3xl border border-white/5 space-y-4 hover:border-[#7F5AF0]/20 cursor-pointer transition-all active:scale-95"
-            >
+          {trendingDreams.length > 0 ? trendingDreams.map(dream => (
+            <div key={dream.slug} onClick={() => { setSelectedDream(dream); saveMimpiToDB(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }} className="flex-shrink-0 w-44 bg-[#1A1A2E] p-5 rounded-3xl border border-white/5 space-y-4 hover:border-[#7F5AF0]/20 cursor-pointer transition-all active:scale-95">
               <div className="w-10 h-10 bg-[#7F5AF0]/10 rounded-xl flex items-center justify-center text-[#7F5AF0]"><ICONS.Dream size={20} /></div>
               <p className="font-bold text-sm leading-tight h-10 line-clamp-2">{dream.judul}</p>
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{dream.kategori}</p>
             </div>
-          ))}
+          )) : (
+            <div className="w-full py-10 text-center text-gray-500 text-xs italic">Menunggu energi mistis...</div>
+          )}
         </div>
       </div>
 
       <AdBanner type="banner" />
 
       <div onClick={() => setCurrentPage(Page.ZODIAC)} className="bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] p-6 rounded-3xl border border-[#7F5AF0]/10 space-y-6 relative overflow-hidden cursor-pointer group">
-        <div className="absolute -top-6 -right-6 text-[#7F5AF0]/5 transition-transform group-hover:scale-110 duration-500"><ICONS.Zodiac size={140} /></div>
+        <div className="absolute -top-6 -right-6 text-[#7F5AF0]/5 transition-transform group-hover:scale-110 duration-500"><Sparkles size={140} /></div>
         <div className="flex justify-between items-start relative z-10">
           <div><h3 className="text-xl font-bold font-cinzel">Bintangmu Hari Ini</h3><p className="text-xs text-gray-500">Cek keberuntungan zodiakmu.</p></div>
-          <div className="bg-[#7F5AF0] p-2 rounded-xl shadow-lg shadow-[#7F5AF0]/30"><ICONS.Star size={16} /></div>
+          <div className="bg-[#7F5AF0] p-2 rounded-xl shadow-lg shadow-[#7F5AF0]/30 text-white"><Star size={16} /></div>
         </div>
         <div className="grid grid-cols-4 gap-4 relative z-10">
           {ZODIAC_LIST.map(z => <div key={z.id} className="text-center"><span className="text-2xl block mb-1">{z.icon}</span><span className="text-[8px] text-gray-500 font-bold uppercase">{z.nama}</span></div>)}
@@ -377,51 +367,33 @@ const DetailMimpi = () => {
 
   return (
     <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="py-6 space-y-8">
-      <button onClick={() => setCurrentPage(Page.HOME)} className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-widest">
-        <ICONS.Next size={16} className="rotate-180" /> Kembali
-      </button>
-
+      <button onClick={() => setCurrentPage(Page.HOME)} className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-widest"><ICONS.Next size={16} className="rotate-180" /> Kembali</button>
       <div className="space-y-4">
         <div className="flex justify-between items-start">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7F5AF0] bg-[#7F5AF0]/10 px-4 py-1.5 rounded-full border border-[#7F5AF0]/20">
-            {selectedDream.kategori}
-          </span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7F5AF0] bg-[#7F5AF0]/10 px-4 py-1.5 rounded-full border border-[#7F5AF0]/20">{selectedDream.kategori}</span>
           <div className="flex gap-2">
-            <button onClick={() => toggleFavorite(selectedDream.id)} className="p-2.5 bg-white/5 rounded-full border border-white/5 active:scale-90 transition-transform">
-              <ICONS.Heart size={18} className={favorites.includes(selectedDream.id) ? 'text-red-500 fill-red-500' : 'text-gray-500'} />
-            </button>
-            <button className="p-2.5 bg-white/5 rounded-full border border-white/5"><ICONS.Share size={18} className="text-gray-500" /></button>
+            <button onClick={() => toggleFavorite(selectedDream.slug)} className="p-2.5 bg-white/5 rounded-full border border-white/5 active:scale-90 transition-transform"><ICONS.Heart size={18} className={favorites.includes(selectedDream.slug) ? 'text-red-500 fill-red-500' : 'text-gray-500'} /></button>
+            <button className="p-2.5 bg-white/5 rounded-full border border-white/5 text-gray-500"><ICONS.Share size={18} /></button>
           </div>
         </div>
         <h1 className="text-4xl font-cinzel font-bold leading-tight tracking-wide">{selectedDream.judul}</h1>
       </div>
-
-      <div className="bg-[#1A1A2E]/80 backdrop-blur-md p-7 rounded-3xl border border-white/5 shadow-inner">
-        <p className="text-gray-300 italic border-l-4 border-[#7F5AF0] pl-5 text-lg leading-relaxed font-poppins">
-          "{selectedDream.ringkasan}"
-        </p>
-      </div>
-
+      <div className="bg-[#1A1A2E]/80 backdrop-blur-md p-7 rounded-3xl border border-white/5 shadow-inner"><p className="text-gray-300 italic border-l-4 border-[#7F5AF0] pl-5 text-lg leading-relaxed font-poppins">"{selectedDream.ringkasan}"</p></div>
       <div className="grid gap-5">
         <div className="bg-green-500/5 border border-green-500/10 p-7 rounded-3xl space-y-4">
-          <h4 className="text-green-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest"><ICONS.Star size={16} /> Sisi Terang</h4>
+          <h4 className="text-green-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest"><Star size={16} /> Sisi Terang</h4>
           <p className="text-sm text-gray-400 leading-relaxed font-light">{selectedDream.tafsir_positif}</p>
         </div>
         <div className="bg-red-500/5 border border-red-500/10 p-7 rounded-3xl space-y-4">
-          <h4 className="text-red-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest"><ICONS.Moon size={16} /> Peringatan</h4>
+          <h4 className="text-red-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest"><Moon size={16} /> Peringatan</h4>
           <p className="text-sm text-gray-400 leading-relaxed font-light">{selectedDream.tafsir_negatif}</p>
         </div>
       </div>
-
       <div className="bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] p-10 rounded-[3rem] flex justify-between items-center shadow-2xl shadow-[#7F5AF0]/20 relative overflow-hidden">
         <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="z-10 text-white">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-70 mb-2">Angka Mistis</h4>
-          <p className="text-5xl font-cinzel font-bold tracking-[0.1em] drop-shadow-lg">{selectedDream.angka}</p>
-        </div>
+        <div className="z-10 text-white"><h4 className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-70 mb-2">Angka Mistis</h4><p className="text-5xl font-cinzel font-bold tracking-[0.1em] drop-shadow-lg">{selectedDream.angka}</p></div>
         <div className="text-6xl animate-bounce z-10">🔮</div>
       </div>
-
       <AdBanner type="banner" />
     </motion.div>
   );
@@ -430,32 +402,17 @@ const DetailMimpi = () => {
 // --- APP CONTENT ---
 const AppContent = () => {
   const { currentPage, isLoading, showInterstitial, setShowInterstitial } = useAppContext();
-
   const renderPage = () => {
     switch (currentPage) {
       case Page.HOME: return <Home />;
       case Page.DETAIL: return <DetailMimpi />;
-      default: return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-5 animate-pulse">
-            <div className="text-7xl">🔮</div>
-            <h2 className="text-2xl font-cinzel font-bold tracking-widest uppercase">Mencari Energi...</h2>
-            <p className="text-gray-500 max-w-[200px] text-sm italic">Ruang mistis ini sedang dipersiapkan untuk Anda.</p>
-        </div>
-      );
+      default: return (<div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-5 animate-pulse"><div className="text-7xl">🔮</div><h2 className="text-2xl font-cinzel font-bold tracking-widest uppercase">Mencari Energi...</h2><p className="text-gray-500 max-w-[200px] text-sm italic">Ruang mistis ini sedang dipersiapkan untuk Anda.</p></div>);
     }
   };
-
   return (
     <Layout>
-      <AnimatePresence mode="wait">
-        {showInterstitial && <AdBanner type="interstitial" onClose={() => setShowInterstitial(false)} />}
-      </AnimatePresence>
-      {isLoading && (
-        <div className="fixed inset-0 z-[60] bg-[#0F0F1A]/80 backdrop-blur-md flex flex-col items-center justify-center">
-            <Loader2 className="w-12 h-12 text-[#7F5AF0] animate-spin mb-4" />
-            <p className="font-cinzel text-lg tracking-widest text-[#7F5AF0] animate-pulse">MEMBUKA TABIR...</p>
-        </div>
-      )}
+      <AnimatePresence mode="wait">{showInterstitial && <AdBanner type="interstitial" onClose={() => setShowInterstitial(false)} />}</AnimatePresence>
+      {isLoading && (<div className="fixed inset-0 z-[60] bg-[#0F0F1A]/80 backdrop-blur-md flex flex-col items-center justify-center"><Loader2 className="w-12 h-12 text-[#7F5AF0] animate-spin mb-4" /><p className="font-cinzel text-lg tracking-widest text-[#7F5AF0] animate-pulse">MEMBUKA TABIR...</p></div>)}
       <AnimatePresence mode="wait">{renderPage()}</AnimatePresence>
     </Layout>
   );
