@@ -1,7 +1,7 @@
 <?php
 /**
  * File: api/db.php
- * Deskripsi: Koneksi database dengan header CORS yang sangat longgar untuk menghindari 'Failed to Fetch'.
+ * Deskripsi: Koneksi database dengan header CORS yang sangat longgar.
  */
 
 // 1. Matikan pelaporan error ke layar (agar tidak merusak JSON)
@@ -24,9 +24,9 @@ header("Content-Type: application/json; charset=UTF-8");
 
 // 4. Konfigurasi Database
 $host = "127.0.0.1";
-$db_name = "fach6357_mistery";
+$db_name = "fach6357_misteri";
 $username = "fach6357_mridla";
-$password = "22hari11bulan"; // Menggunakan password yang sebelumnya dikonfirmasi berhasil
+$password = "@@22Hari11Bulan"; 
 
 try {
     $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
@@ -38,13 +38,12 @@ try {
     
     $conn = new PDO($dsn, $username, $password, $options);
 } catch (PDOException $e) {
-    // Jika koneksi gagal, jangan biarkan script mati mendadak
     $conn = null;
     $db_error = $e->getMessage();
 }
 
 /**
- * Fungsi pembantu untuk mengirim respon error JSON dengan CORS tetap aktif
+ * Fungsi pembantu untuk mengirim respon error JSON
  */
 function sendError($msg, $code = 500) {
     http_response_code($code);

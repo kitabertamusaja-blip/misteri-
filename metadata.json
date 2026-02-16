@@ -1,5 +1,7 @@
 {
-  "name": "Misteri+",
-  "description": "A mystical and spiritual application for dream interpretation, daily zodiacs, and personality tests with a high-engagement dark neon aesthetic.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "name": "",
+  "description": ""
 }
