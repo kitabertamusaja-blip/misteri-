@@ -69,10 +69,10 @@ const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhos
 const fetchFromDB = async (query: string = '') => {
   try {
     const response = await fetch(`${API_BASE_URL}/search.php?q=${encodeURIComponent(query)}`);
-    if (!response.ok) return [];
-    return await response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (e) {
-    console.error("Fetch Error:", e);
+    console.error("Fetch Error (Database mungkin offline/salah kredensial):", e);
     return [];
   }
 };
@@ -93,7 +93,7 @@ const saveMimpiToDB = async (dreamData: any) => {
     }
     return result;
   } catch (e) { 
-    console.error("❌ Network Error/500:", e);
+    console.error("❌ Gagal terhubung ke API Simpan:", e);
     return null;
   }
 };
@@ -104,7 +104,7 @@ const getAIInterpretation = async (userPrompt: string) => {
       model: "gemini-3-flash-preview",
       contents: `Berikan tafsir mimpi untuk: "${userPrompt}". Bahasa: Indonesia. Nuansa: Mistis, Bijak.`,
       config: {
-        thinkingConfig: { thinkingBudget: 0 }, // Mematikan thought signature agar tidak ada warning
+        thinkingConfig: { thinkingBudget: 0 }, // WAJIB: Menghilangkan warning thoughtSignature
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -120,7 +120,6 @@ const getAIInterpretation = async (userPrompt: string) => {
         }
       }
     });
-    // Gunakan .text property (bukan method)
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Gemini Error:", error);
@@ -345,7 +344,12 @@ const Home = () => {
           <div className="bg-[#7F5AF0] p-2 rounded-xl shadow-lg shadow-[#7F5AF0]/30 text-white"><Star size={16} /></div>
         </div>
         <div className="grid grid-cols-4 gap-4 relative z-10">
-          {ZODIAC_LIST.map(z => <div key={z.id} className="text-center"><span className="text-2xl block mb-1">{z.icon}</span><span className="text-[8px] text-gray-500 font-bold uppercase">{z.nama}</span></div>)}
+          {[
+            { id: 1, nama: 'Aries', icon: '♈' },
+            { id: 2, nama: 'Taurus', icon: '♉' },
+            { id: 3, nama: 'Gemini', icon: '♊' },
+            { id: 4, nama: 'Cancer', icon: '♋' }
+          ].map(z => <div key={z.id} className="text-center"><span className="text-2xl block mb-1">{z.icon}</span><span className="text-[8px] text-gray-500 font-bold uppercase">{z.nama}</span></div>)}
         </div>
       </div>
     </motion.div>

@@ -1,29 +1,25 @@
 <?php
 /**
  * File: api/db.php
- * Deskripsi: Koneksi database dengan header CORS yang sangat longgar.
  */
 
-// 1. Matikan pelaporan error ke layar (agar tidak merusak JSON)
+// 1. Matikan output error langsung agar JSON tidak rusak pada produksi
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
-// 2. Header CORS - Harus paling atas
+// 2. Header CORS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept");
-header("Access-Control-Allow-Credentials: true");
+header("Content-Type: application/json; charset=UTF-8");
 
-// 3. Tangani pre-flight OPTIONS
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-header("Content-Type: application/json; charset=UTF-8");
-
-// 4. Konfigurasi Database
-$host = "127.0.0.1";
+// 3. Konfigurasi Database
+$host = "localhost"; 
 $db_name = "fach6357_misteri";
 $username = "fach6357_mridla";
 $password = "@@22Hari11Bulan"; 
@@ -32,27 +28,18 @@ $conn = null;
 $db_error = null;
 
 try {
-    $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-    
-    $conn = new PDO($dsn, $username, $password, $options);
+    $conn = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8mb4", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $db_error = $e->getMessage();
 }
 
-/**
- * Fungsi pembantu untuk mengirim respon error JSON
- */
-function sendError($msg, $code = 500) {
-    http_response_code($code);
-    echo json_encode([
-        "status" => "error",
-        "message" => $msg
-    ]);
-    exit();
+if (!function_exists('sendError')) {
+    function sendError($msg, $code = 500) {
+        http_response_code($code);
+        echo json_encode(["status" => "error", "message" => $msg]);
+        exit();
+    }
 }
 ?>
