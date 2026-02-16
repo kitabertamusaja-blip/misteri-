@@ -258,7 +258,7 @@ const getZodiacFortune = async (zodiac: string) => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Berikan ramalan harian untuk zodiak ${zodiac}. Hari ini: ${new Date().toLocaleDateString('id-ID')}.`,
+      contents: `Berikan ramalan harian untuk zodiak ${zodiac}. Hari ini: ${new Date().toLocaleDateString('id-ID')}. Ramalan untuk tahun 2026.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -286,7 +286,7 @@ const getNumerologyReading = async (number: number, dob: string) => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Berikan pembacaan numerologi untuk Angka Jalur Hidup (Life Path Number) ${number} berdasarkan tanggal lahir ${dob}. Nuansa: Mistis and mendalam.`,
+      contents: `Berikan pembacaan numerologi untuk Angka Jalur Hidup (Life Path Number) ${number} berdasarkan tanggal lahir ${dob}. Nuansa: Mistis and mendalam. Analisis untuk tahun 2026.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -317,9 +317,9 @@ const getPrimbonReading = async (dob: string) => {
       1. Hitung Weton (Hari + Pasaran).
       2. Hitung Nilai Neptu.
       3. Berikan makna filosofis hari tersebut.
-      4. Berikan ramalan Watak, Keberuntungan, Rejeki.
+      4. Berikan ramalan Watak, Keberuntungan, Rejeki untuk tahun 2026.
       5. Berikan daftar Pekerjaan yang cocok, Jodoh yang cocok, Warna keberuntungan, dan Hari Baik.
-      6. Berikan daftar Jenis Bisnis yang cocok untuk weton ini.
+      6. Berikan daftar Jenis Bisnis yang cocok untuk weton ini di tahun 2026.
       Bahasa: Indonesia. Nuansa: Tradisional, Mistis, Berwibawa.`,
       config: {
         responseMimeType: "application/json",
@@ -356,7 +356,7 @@ const getChineseZodiacReading = async (dob: string) => {
       model: 'gemini-3-flash-preview',
       contents: `Berikan ramalan Horoskop China (Shio) lengkap untuk tanggal lahir ${dob}. 
       Identifikasi: Shio, Elemen (Kayu/Api/Tanah/Logam/Air), and Energi (Yin/Yang).
-      Berikan ramalan Karakter, Karir, Asmara, and Keberuntungan tahun ini.
+      Berikan ramalan Karakter, Karir, Asmara, and Keberuntungan tahun 2026 (Tahun Kuda Api).
       Bahasa: Indonesia. Nuansa: Tradisional Oriental, Bijak, Filosofis.`,
       config: {
         responseMimeType: "application/json",
@@ -371,10 +371,10 @@ const getChineseZodiacReading = async (dob: string) => {
             karir: { type: Type.STRING },
             asmara: { type: Type.STRING },
             jodoh_cocok: { type: Type.STRING },
-            keberuntungan_2024: { type: Type.STRING },
+            keberuntungan_2026: { type: Type.STRING },
             warna_hoki: { type: Type.STRING }
           },
-          required: ["shio", "elemen", "energi", "icon", "karakter", "karir", "asmara", "jodoh_cocok", "keberuntungan_2024", "warna_hoki"]
+          required: ["shio", "elemen", "energi", "icon", "karakter", "karir", "asmara", "jodoh_cocok", "keberuntungan_2026", "warna_hoki"]
         }
       }
     });
@@ -394,9 +394,9 @@ const getSundanesePrimbonReading = async (dob: string) => {
       1. Identifikasi Wedal (Hari Lahir Sunda).
       2. Tentukan Elemen Wedal (Cai/Air, Seuneu/Api, Bumi/Tanah, Angin/Udara, dll).
       3. Berikan watak dasar (Paripolah) yang mendalam.
-      4. Berikan ramalan Rejeki (Lalampahan Hirup).
+      4. Berikan ramalan Rejeki (Lalampahan Hirup) untuk tahun 2026.
       5. Berikan Jodoh yang cocok (Pitemuane Jodoh).
-      6. Berikan Hari Baik dan Pantangan (Caliweura).
+      6. Berikan Hari Baik dan Pantangan (Caliweura) di tahun 2026.
       7. Berikan Makna Filosofis Sunda yang relevan.
       Bahasa: Indonesia (dengan sedikit istilah Sunda). Nuansa: Tradisional Sunda, Bijak, Mistis.`,
       config: {
@@ -644,7 +644,7 @@ const ZodiacPage = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Horoskop <span className="text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.4)]">Bintang</span></h2>
-        <p className="text-sm text-gray-500 font-poppins px-6">Garis langit yang menentukan langkah Anda hari ini.</p>
+        <p className="text-sm text-gray-500 font-poppins px-6">Garis langit yang menentukan langkah Anda hari ini di tahun 2026.</p>
       </header>
 
       {!reading ? (
@@ -675,7 +675,7 @@ const ZodiacPage = () => {
           <div className="grid gap-6">
             <div className="mystic-card p-8 rounded-[2.5rem] border-none relative">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-[#FFD700]"></div>
-              <h4 className="text-[9px] font-bold uppercase text-gray-600 tracking-widest mb-4">Ramalan Umum</h4>
+              <h4 className="text-[9px] font-bold uppercase text-gray-600 tracking-widest mb-4">Ramalan 2026</h4>
               <p className="text-white font-poppins leading-relaxed">{reading.umum}</p>
             </div>
 
@@ -780,7 +780,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Grid Kategori Beranda - Optimal Layout */}
+      {/* Grid Kategori Beranda - Professional Grid for 6 Items */}
       <section className="grid grid-cols-3 gap-3 px-1">
         {[
           { label: 'Tafsir', id: Page.HOME, icon: <Moon size={16} />, color: '#7F5AF0' }, 
@@ -863,7 +863,7 @@ const ChineseZodiacPage = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Primbon <span className="text-[#E53E3E] drop-shadow-[0_0_10px_rgba(229,62,62,0.4)]">China</span></h2>
-        <p className="text-sm text-gray-500 font-poppins px-6">Singkap shio and elemen takdir Anda berdasarkan kalender lunar kuno.</p>
+        <p className="text-sm text-gray-500 font-poppins px-6">Singkap shio and elemen takdir Anda berdasarkan kalender lunar kuno untuk 2026.</p>
       </header>
 
       {!reading ? (
@@ -929,9 +929,9 @@ const ChineseZodiacPage = () => {
 
             <div className="mystic-card bg-[#E53E3E]/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
               <h4 className="text-[#E53E3E] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
-                <Star size={22} /> Nasib 2024/2025
+                <Star size={22} /> Nasib 2026
               </h4>
-              <p className="text-xl text-gray-200 font-poppins leading-relaxed italic text-white">"{reading.keberuntungan_2024}"</p>
+              <p className="text-xl text-gray-200 font-poppins leading-relaxed italic text-white">"{reading.keberuntungan_2026}"</p>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
@@ -979,7 +979,7 @@ const SundanesePrimbonPage = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Primbon <span className="text-[#14B8A6] drop-shadow-[0_0_10px_rgba(20,184,166,0.4)]">Sunda</span></h2>
-        <p className="text-sm text-gray-500 font-poppins px-6">Menyingkap rahasia Paririmbon and elemen Wedal warisan karuhun Sunda.</p>
+        <p className="text-sm text-gray-500 font-poppins px-6">Menyingkap rahasia Paririmbon and elemen Wedal warisan karuhun untuk tahun 2026.</p>
       </header>
 
       {!reading ? (
@@ -1029,7 +1029,7 @@ const SundanesePrimbonPage = () => {
 
             <div className="grid grid-cols-2 gap-5">
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
-                <h4 className="text-[10px] font-bold uppercase text-[#14B8A6] tracking-[0.3em] flex items-center gap-3"><Coins size={18}/> Rejeki</h4>
+                <h4 className="text-[10px] font-bold uppercase text-[#14B8A6] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Rejeki 2026</h4>
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.rejeki}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
@@ -1040,7 +1040,7 @@ const SundanesePrimbonPage = () => {
 
             <div className="grid grid-cols-2 gap-5">
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
-                <h4 className="text-[10px] font-bold uppercase text-yellow-500 tracking-[0.3em] flex items-center gap-3"><Clock size={18}/> Hari Baik</h4>
+                <h4 className="text-[10px] font-bold uppercase text-yellow-500 tracking-[0.3em] flex items-center gap-3"><Clock size={18}/> Hari Baik 2026</h4>
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.hari_baik}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
@@ -1051,7 +1051,7 @@ const SundanesePrimbonPage = () => {
 
             <div className="mystic-card bg-white/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
               <h4 className="text-[#14B8A6] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
-                <Coffee size={22} /> Piwuruk (Nasihat)
+                <Coffee size={22} /> Piwuruk (Nasihat 2026)
               </h4>
               <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.nasihat}"</p>
             </div>
@@ -1104,7 +1104,7 @@ const NumerologyPage = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Takdir <span className="text-[#2CB67D] drop-shadow-[0_0_10px_rgba(44,182,125,0.4)]">Numerik</span></h2>
-        <p className="text-sm text-gray-500 font-poppins px-6">Singkap kode rahasia yang tersembunyi dalam angka kelahiran Anda.</p>
+        <p className="text-sm text-gray-500 font-poppins px-6">Singkap kode rahasia yang tersembunyi dalam angka kelahiran Anda untuk 2026.</p>
       </header>
 
       {!reading ? (
@@ -1149,7 +1149,7 @@ const NumerologyPage = () => {
 
             <div className="grid grid-cols-2 gap-5">
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
-                <h4 className="text-[10px] font-bold uppercase text-[#2CB67D] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Karir</h4>
+                <h4 className="text-[10px] font-bold uppercase text-[#2CB67D] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Karir 2026</h4>
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.karir}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
@@ -1166,7 +1166,7 @@ const NumerologyPage = () => {
             </div>
 
              <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
-              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Saran Semesta</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Saran Semesta 2026</h4>
               <p className="text-gray-200 leading-relaxed font-poppins text-lg text-white">{reading.saran}</p>
             </div>
           </div>
@@ -1204,7 +1204,7 @@ const JavaHoroscopePage = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Primbon <span className="text-[#FF7E33] drop-shadow-[0_0_10px_rgba(255,126,51,0.4)]">Jawa</span></h2>
-        <p className="text-sm text-gray-500 font-poppins px-6">Menyingkap serat kehidupan melalui hitungan weton leluhur nusantara.</p>
+        <p className="text-sm text-gray-500 font-poppins px-6">Menyingkap serat kehidupan melalui hitungan weton leluhur untuk tahun 2026.</p>
       </header>
 
       {!reading ? (
@@ -1258,7 +1258,7 @@ const JavaHoroscopePage = () => {
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.pekerjaan}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
-                <h4 className="text-[10px] font-bold uppercase text-amber-500 tracking-[0.3em] flex items-center gap-3"><Store size={18}/> Bisnis</h4>
+                <h4 className="text-[10px] font-bold uppercase text-amber-500 tracking-[0.3em] flex items-center gap-3"><Store size={18}/> Bisnis 2026</h4>
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.bisnis}</p>
               </div>
             </div>
@@ -1269,14 +1269,14 @@ const JavaHoroscopePage = () => {
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.jodoh}</p>
               </div>
               <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
-                <h4 className="text-[10px] font-bold uppercase text-yellow-500 tracking-[0.3em] flex items-center gap-3"><Clock size={18}/> Hari Baik</h4>
+                <h4 className="text-[10px] font-bold uppercase text-yellow-500 tracking-[0.3em] flex items-center gap-3"><Clock size={18}/> Hari Baik 2026</h4>
                 <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.hari_baik}</p>
               </div>
             </div>
 
             <div className="mystic-card bg-[#FF7E33]/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
               <h4 className="text-[#FF7E33] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
-                <Coins size={22} /> Rejeki
+                <Coins size={22} /> Rejeki 2026
               </h4>
               <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.rejeki}"</p>
             </div>
@@ -1419,7 +1419,7 @@ const AppContent = () => {
         <div className="py-6 space-y-12">
           <header className="space-y-4 text-center">
             <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Mimpi <span className="text-[#E53E3E] drop-shadow-[0_0_10px_rgba(229,62,62,0.4)]">Hits</span></h2>
-            <p className="text-sm text-gray-500 font-poppins px-8 text-white/60">Tafsir yang paling sering menembus tabir kesadaran kolektif.</p>
+            <p className="text-sm text-gray-500 font-poppins px-8 text-white/60">Tafsir yang paling sering menembus tabir kesadaran kolektif tahun 2026.</p>
           </header>
           <div className="space-y-5 px-2">
             {[1,2,3,4,5,6].map(i => (
@@ -1429,7 +1429,7 @@ const AppContent = () => {
                     <div className="h-12 w-[1px] bg-white/10"></div>
                     <div>
                       <h4 className="font-bold font-poppins text-lg text-white group-hover:text-[#7F5AF0] transition-colors">Visi Kolektif #{i}</h4>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-1.5">Manifestasi Spiritual</p>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-1.5">Manifestasi Spiritual 2026</p>
                     </div>
                   </div>
                   <div className="bg-[#7F5AF0]/10 p-2.5 rounded-xl group-hover:bg-[#7F5AF0]/20 transition-all">
@@ -1445,7 +1445,7 @@ const AppContent = () => {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 18, repeat: Infinity, ease: "linear" }} className="text-[10rem] filter drop-shadow-[0_0_40px_rgba(127,90,240,0.6)]">🔮</motion.div>
           <div className="space-y-6">
             <h2 className="text-5xl font-cinzel font-bold tracking-[0.4em] uppercase text-[#7F5AF0] glow-text">RITUAL</h2>
-            <p className="text-gray-500 max-w-[320px] text-base italic font-poppins leading-relaxed mx-auto text-white/60">Ruang mistis ini sedang disiapkan oleh para oracle kami. Harap menunggu hingga energi terkumpul sempurna.</p>
+            <p className="text-gray-500 max-w-[320px] text-base italic font-poppins leading-relaxed mx-auto text-white/60">Ruang mistis ini sedang disiapkan oleh para oracle kami untuk tahun 2026. Harap menunggu hingga energi terkumpul sempurna.</p>
           </div>
           <button onClick={() => window.location.reload()} className="text-[11px] font-bold uppercase text-white/20 tracking-[0.5em] hover:text-[#7F5AF0] transition-all">Muat Ulang Dimensi</button>
         </div>
