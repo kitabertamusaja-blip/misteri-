@@ -282,15 +282,15 @@ const getPrimbonReading = async (dob: string) => {
           properties: {
             weton: { type: Type.STRING },
             neptu: { type: Type.NUMBER },
-            makna_hari: { type: Type.STRING, description: 'Makna filosofis hari tersebut (misal: "Kamis adalah Angin, wataknya pemberi")' },
+            makna_hari: { type: Type.STRING },
             watak: { type: Type.STRING },
             keberuntungan: { type: Type.STRING },
             rejeki: { type: Type.STRING },
-            pekerjaan: { type: Type.STRING, description: 'Daftar pekerjaan yang cocok' },
-            bisnis: { type: Type.STRING, description: 'Jenis bisnis atau wirausaha yang cocok' },
-            jodoh: { type: Type.STRING, description: 'Kriteria atau weton jodoh yang cocok' },
-            warna: { type: Type.STRING, description: 'Warna keberuntungan' },
-            hari_baik: { type: Type.STRING, description: 'Hari-hari baik untuk memulai hajat' },
+            pekerjaan: { type: Type.STRING },
+            bisnis: { type: Type.STRING },
+            jodoh: { type: Type.STRING },
+            warna: { type: Type.STRING },
+            hari_baik: { type: Type.STRING },
             saran: { type: Type.STRING }
           },
           required: ["weton", "neptu", "makna_hari", "watak", "keberuntungan", "rejeki", "pekerjaan", "bisnis", "jodoh", "warna", "hari_baik", "saran"]
@@ -377,21 +377,21 @@ const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6"
       >
-        <div className="bg-[#1A1A2E] w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl border border-[#7F5AF0]/30 relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white p-2"><X size={20} /></button>
-          <div className="bg-[#7F5AF0] p-2 text-[10px] font-bold text-center tracking-widest text-white uppercase font-poppins">Rekomendasi Mistis</div>
+        <div className="mystic-card w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl relative border-none">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white p-2 z-10"><X size={20} /></button>
+          <div className="bg-[#7F5AF0] p-2.5 text-[10px] font-bold text-center tracking-widest text-white uppercase font-poppins">Pesan Mistis</div>
           <div className="p-10 text-center space-y-6">
-            <div className="w-20 h-20 bg-[#2D284D] rounded-3xl mx-auto flex items-center justify-center text-4xl shadow-lg shadow-[#7F5AF0]/20">🌟</div>
-            <h3 className="text-2xl font-bold font-cinzel text-white tracking-wider">PREMIUM ACCESS</h3>
-            <p className="text-sm text-gray-400 leading-relaxed font-poppins">Buka kunci ramalan harian dan hilangkan iklan selamanya hanya dengan Rp 15rb/bulan.</p>
-            <button onClick={onClose} className="w-full bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] py-4 rounded-2xl font-bold text-white shadow-xl shadow-[#7F5AF0]/20 transition-all uppercase tracking-widest text-xs font-poppins active:scale-95">Lanjutkan</button>
+            <div className="w-24 h-24 bg-[#2D284D]/50 rounded-3xl mx-auto flex items-center justify-center text-4xl shadow-lg shadow-[#7F5AF0]/20 animate-floating">🌟</div>
+            <h3 className="text-2xl font-bold font-cinzel text-white tracking-wider glow-text">AKSES PREMIUM</h3>
+            <p className="text-sm text-gray-400 leading-relaxed font-poppins">Buka kunci ramalan tak terbatas dan hilangkan iklan selamanya hanya dengan Rp 15rb/bulan.</p>
+            <button onClick={onClose} className="w-full bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] py-4 rounded-2xl font-bold text-white shadow-xl shadow-[#7F5AF0]/30 transition-all uppercase tracking-widest text-xs font-poppins">Lanjutkan</button>
           </div>
         </div>
       </motion.div>
     );
   }
   return (
-    <div className="w-full h-24 bg-[#1A1A2E]/50 backdrop-blur-md border border-white/5 rounded-2xl flex items-center justify-center my-6 overflow-hidden relative group cursor-pointer transition-all hover:border-[#7F5AF0]/30">
+    <div className="w-full h-24 mystic-card rounded-[1.5rem] flex items-center justify-center my-6 overflow-hidden relative group cursor-pointer border-none">
       <div className="absolute top-2 left-2 text-[8px] text-gray-600 font-bold uppercase tracking-widest">Sponsored</div>
       <div className="text-gray-500 font-bold text-sm tracking-[0.3em] group-hover:text-[#7F5AF0] transition-colors uppercase font-cinzel">Misteri+ Premium</div>
     </div>
@@ -431,8 +431,6 @@ const HomePage = () => {
           refreshTrending();
           setShowInterstitial(true);
           setCurrentPage(Page.DETAIL);
-      } else {
-        alert("Energi mistis sedang terputus. Silakan coba kata kunci lain.");
       }
     } catch (err) {
       console.error(err);
@@ -440,91 +438,85 @@ const HomePage = () => {
     setIsLoading(false);
   };
 
-  const handleCategoryClick = (id: Page) => {
-    if (id === Page.HOME) {
-      inputRef.current?.focus();
-      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      setCurrentPage(id);
-    }
-  };
-
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="py-6 space-y-10">
-      <section className="space-y-6 text-center md:text-left">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.98, filter: 'blur(10px)' }} 
+      animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }} 
+      exit={{ opacity: 0, filter: 'blur(10px)' }} 
+      className="py-6 space-y-12"
+    >
+      <section className="space-y-10 text-center pt-8">
         <h2 className="text-5xl font-cinzel font-bold leading-[1.1] tracking-tight">
-          Apa pesan <br/>
-          <span className="text-[#7F5AF0] drop-shadow-[0_0_10px_rgba(127,90,240,0.5)]">Semesta</span> bagimu?
+          Pesan <br/>
+          <span className="text-[#7F5AF0] glow-text">Semesta</span>
         </h2>
-        <div className="relative group max-w-lg mx-auto md:mx-0">
-          <div className="absolute inset-0 bg-[#7F5AF0]/10 blur-2xl group-focus-within:bg-[#7F5AF0]/20 transition-all"></div>
-          <input 
-            ref={inputRef}
-            value={searchInput} 
-            onChange={(e) => setSearchInput(e.target.value)} 
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
-            placeholder="Ketik mimpimu semalam..." 
-            className="relative w-full bg-[#1A1A2E]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] py-5 pl-14 pr-16 text-white focus:outline-none focus:border-[#7F5AF0]/50 transition-all font-poppins text-base shadow-2xl" 
-          />
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#7F5AF0] transition-colors" size={22} />
-          <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-[#7F5AF0] rounded-full text-white shadow-lg shadow-[#7F5AF0]/30 hover:bg-[#6b48d1] transition-all flex items-center justify-center active:scale-90">
-            <ChevronRight size={20} />
-          </button>
+        
+        <div className="relative group max-w-lg mx-auto">
+          <div className="absolute -inset-2 bg-gradient-to-r from-[#7F5AF0]/20 to-[#6b48d1]/20 blur-2xl opacity-40 group-focus-within:opacity-80 transition-all"></div>
+          <div className="relative">
+            <input 
+              ref={inputRef}
+              value={searchInput} 
+              onChange={(e) => setSearchInput(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()} 
+              placeholder="Apa yang Anda mimpikan?" 
+              className="w-full oracle-input rounded-full py-6 pl-14 pr-16 text-white focus:outline-none font-poppins text-lg transition-all placeholder:text-gray-600" 
+            />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-[#7F5AF0] transition-colors" size={24} />
+            <button onClick={handleSearch} className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-[#7F5AF0] rounded-full text-white shadow-lg shadow-[#7F5AF0]/30 hover:bg-[#6b48d1] flex items-center justify-center">
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-4 gap-4">
+      <section className="grid grid-cols-4 gap-4 px-2">
         {[
           { label: 'Tafsir', id: Page.HOME, icon: <Moon size={24} />, color: '#7F5AF0' }, 
           { label: 'Zodiak', id: Page.ZODIAC, icon: <Sparkles size={24} />, color: '#FFD700' }, 
           { label: 'Numerik', id: Page.NUMEROLOGY, icon: <Zap size={24} />, color: '#2CB67D' }, 
           { label: 'Primbon', id: Page.JAVA_HOROSCOPE, icon: <Sun size={24} />, color: '#FF7E33' }
         ].map(cat => (
-          <button key={cat.label} onClick={() => handleCategoryClick(cat.id)} className="flex flex-col items-center gap-3 group">
-            <div className="w-16 h-16 bg-[#1A1A2E]/60 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center border border-white/5 group-hover:border-[#7F5AF0]/50 group-hover:bg-[#7F5AF0]/10 transition-all shadow-xl">
-              <span style={{ color: cat.color }}>{cat.icon}</span>
+          <button key={cat.label} onClick={() => setCurrentPage(cat.id)} className="flex flex-col items-center gap-4 group">
+            <div className="w-16 h-16 bg-[#1A1A2E]/50 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-[#7F5AF0]/40 group-hover:bg-[#7F5AF0]/10 transition-all shadow-xl">
+              <span style={{ color: cat.color }} className="group-hover:scale-110 transition-transform">{cat.icon}</span>
             </div>
-            <span className="text-[10px] font-bold uppercase text-gray-500 tracking-[0.2em]">{cat.label}</span>
+            <span className="text-[10px] font-bold uppercase text-gray-500 tracking-[0.3em]">{cat.label}</span>
           </button>
         ))}
       </section>
 
-      <section className="space-y-5">
-        <div className="flex justify-between items-end px-1">
+      <section className="space-y-6">
+        <div className="flex justify-between items-end px-2">
           <div>
             <h3 className="text-xl font-cinzel font-bold tracking-wider uppercase flex items-center gap-3">
-              <Compass size={20} className="text-[#7F5AF0]" />
-              Populer
+              <Flame size={20} className="text-[#7F5AF0]" />
+              Hits
             </h3>
-            <div className="w-12 h-1 bg-[#7F5AF0] rounded-full mt-1"></div>
+            <div className="w-14 h-1.5 bg-gradient-to-r from-[#7F5AF0] to-transparent rounded-full mt-2"></div>
           </div>
-          <button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest hover:underline">Semua</button>
+          <button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest hover:underline transition-all">Lihat Semua</button>
         </div>
         
-        <div className="flex gap-5 overflow-x-auto no-scrollbar pb-4 pt-2 -mx-2 px-2">
-          {trendingDreams.length > 0 ? trendingDreams.map(dream => (
+        <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 pt-2 -mx-2 px-4 snap-x">
+          {trendingDreams.map(dream => (
             <motion.div 
-              whileTap={{ scale: 0.96 }}
               key={dream.slug} 
               onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }} 
-              className="flex-shrink-0 w-52 bg-[#1A1A2E]/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-[#7F5AF0]/30 cursor-pointer transition-all"
+              className="flex-shrink-0 w-56 mystic-card p-6 rounded-[2.5rem] space-y-5 cursor-pointer relative group snap-center border-none"
             >
-              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Moon size={60} />
+              <div className="absolute -top-4 -right-4 p-3 opacity-5 group-hover:opacity-15 transition-opacity duration-500">
+                <Moon size={100} />
               </div>
-              <div className="w-11 h-11 bg-[#7F5AF0]/10 rounded-2xl flex items-center justify-center text-[#7F5AF0] shadow-inner">
-                <Sparkles size={20} />
+              <div className="w-12 h-12 bg-[#7F5AF0]/10 rounded-2xl flex items-center justify-center text-[#7F5AF0] shadow-inner">
+                <Sparkles size={22} />
               </div>
-              <div>
-                <p className="font-bold text-base leading-tight h-12 line-clamp-2 font-poppins">{dream.judul}</p>
-                <p className="text-[9px] text-[#7F5AF0] font-bold uppercase tracking-widest mt-2">{dream.kategori}</p>
+              <div className="space-y-2">
+                <p className="font-bold text-lg leading-tight h-14 line-clamp-2 font-poppins">{dream.judul}</p>
+                <p className="text-[10px] text-[#7F5AF0] font-bold uppercase tracking-widest">{dream.kategori}</p>
               </div>
             </motion.div>
-          )) : (
-            <div className="w-full py-16 text-center text-gray-500 text-xs italic font-poppins bg-[#1A1A2E]/20 rounded-3xl border border-dashed border-white/5">
-              Menghubungkan energi mistis...
-            </div>
-          )}
+          ))}
         </div>
       </section>
 
@@ -536,64 +528,62 @@ const HomePage = () => {
 const DetailPage = () => {
   const { selectedDream, setCurrentPage, favorites, toggleFavorite } = useAppContext();
   
-  useEffect(() => {
-    if (!selectedDream) {
-      setCurrentPage(Page.HOME);
-    }
-  }, [selectedDream]);
-
   if (!selectedDream) return null;
 
   return (
-    <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -30, opacity: 0 }} className="py-6 space-y-10">
-      <header className="flex items-center justify-between">
-        <button onClick={() => setCurrentPage(Page.HOME)} className="flex items-center gap-2 text-gray-500 text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-white bg-white/5 px-4 py-2 rounded-full">
+    <motion.div 
+      initial={{ opacity: 0, filter: 'blur(15px)' }} 
+      animate={{ opacity: 1, filter: 'blur(0px)' }} 
+      className="py-6 space-y-10"
+    >
+      <header className="flex items-center justify-between mb-4">
+        <button onClick={() => setCurrentPage(Page.HOME)} className="flex items-center gap-2 text-gray-500 text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-white bg-white/5 px-5 py-2.5 rounded-full">
           <ChevronRight size={14} className="rotate-180" /> Kembali
         </button>
-        <div className="flex gap-3">
-          <button onClick={() => toggleFavorite(selectedDream.slug)} className="w-10 h-10 bg-[#1A1A2E] rounded-full border border-white/5 flex items-center justify-center active:scale-90 transition-all">
-            <Heart size={18} className={favorites.includes(selectedDream.slug) ? 'text-red-500 fill-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-gray-500'} />
+        <div className="flex gap-4">
+          <button onClick={() => toggleFavorite(selectedDream.slug)} className="w-12 h-12 mystic-card rounded-full flex items-center justify-center border-none">
+            <Heart size={20} className={favorites.includes(selectedDream.slug) ? 'text-red-500 fill-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'text-gray-500'} />
           </button>
-          <button className="w-10 h-10 bg-[#1A1A2E] rounded-full border border-white/5 flex items-center justify-center active:scale-90 transition-all text-gray-500">
-            <Share2 size={18} />
+          <button className="w-12 h-12 mystic-card rounded-full flex items-center justify-center text-gray-500 border-none">
+            <Share2 size={20} />
           </button>
         </div>
       </header>
       
-      <div className="space-y-4">
-        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#7F5AF0] bg-[#7F5AF0]/10 px-5 py-2 rounded-full border border-[#7F5AF0]/20 inline-block">{selectedDream.kategori}</span>
-        <h1 className="text-4xl font-cinzel font-bold leading-tight tracking-wide text-white">{selectedDream.judul}</h1>
+      <div className="space-y-5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#7F5AF0] bg-[#7F5AF0]/10 px-6 py-2.5 rounded-full border border-[#7F5AF0]/20 inline-block">{selectedDream.kategori}</span>
+        <h1 className="text-5xl font-cinzel font-bold leading-tight tracking-wide text-white glow-text">{selectedDream.judul}</h1>
       </div>
 
-      <section className="bg-gradient-to-br from-[#1A1A2E] to-transparent p-8 rounded-[2.5rem] border border-white/5 shadow-2xl relative">
-        <div className="absolute top-0 left-0 w-1 h-full bg-[#7F5AF0] rounded-full"></div>
-        <p className="text-gray-200 italic text-xl leading-relaxed font-poppins font-light">"{selectedDream.ringkasan}"</p>
+      <section className="mystic-card p-10 rounded-[3.5rem] relative border-none">
+        <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#7F5AF0] to-transparent rounded-full"></div>
+        <p className="text-gray-200 italic text-2xl leading-relaxed font-poppins font-light">"{selectedDream.ringkasan}"</p>
       </section>
 
-      <div className="grid gap-6">
-        <div className="bg-[#2CB67D]/5 border border-[#2CB67D]/20 p-8 rounded-[2.5rem] space-y-4 shadow-xl">
-          <h4 className="text-[#2CB67D] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em] font-poppins">
-            <div className="w-2 h-2 bg-[#2CB67D] rounded-full animate-pulse"></div>
-            Sisi Terang
+      <div className="grid gap-8">
+        <div className="mystic-card bg-[#2CB67D]/5 border-none p-8 rounded-[2.5rem] space-y-4">
+          <h4 className="text-[#2CB67D] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.3em]">
+            <div className="w-2.5 h-2.5 bg-[#2CB67D] rounded-full animate-pulse"></div>
+            Pesan Cahaya
           </h4>
-          <p className="text-sm text-gray-300 leading-relaxed font-poppins font-light">{selectedDream.tafsir_positif}</p>
+          <p className="text-base text-gray-300 leading-relaxed font-poppins">{selectedDream.tafsir_positif}</p>
         </div>
-        <div className="bg-[#E53E3E]/5 border border-[#E53E3E]/20 p-8 rounded-[2.5rem] space-y-4 shadow-xl">
-          <h4 className="text-[#E53E3E] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em] font-poppins">
-            <div className="w-2 h-2 bg-[#E53E3E] rounded-full animate-pulse"></div>
-            Peringatan
+        <div className="mystic-card bg-[#E53E3E]/5 border-none p-8 rounded-[2.5rem] space-y-4">
+          <h4 className="text-[#E53E3E] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.3em]">
+            <div className="w-2.5 h-2.5 bg-[#E53E3E] rounded-full animate-pulse"></div>
+            Pesan Kegelapan
           </h4>
-          <p className="text-sm text-gray-300 leading-relaxed font-poppins font-light">{selectedDream.tafsir_negatif}</p>
+          <p className="text-base text-gray-300 leading-relaxed font-poppins">{selectedDream.tafsir_negatif}</p>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] p-12 rounded-[3.5rem] flex justify-between items-center shadow-2xl shadow-[#7F5AF0]/30 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div className="bg-gradient-to-br from-[#7F5AF0] to-[#6b48d1] p-12 rounded-[4rem] flex justify-between items-center shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-15"></div>
         <div className="z-10">
-          <h4 className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/60 mb-3 font-poppins">Angka Mistis</h4>
-          <p className="text-6xl font-cinzel font-bold tracking-[0.1em] text-white drop-shadow-lg">{selectedDream.angka}</p>
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.5em] text-white/70 mb-4 font-poppins">Angka Takdir</h4>
+          <p className="text-7xl font-cinzel font-bold tracking-[0.1em] text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]">{selectedDream.angka}</p>
         </div>
-        <div className="text-7xl z-10 filter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] animate-bounce">🔮</div>
+        <div className="text-8xl z-10 animate-floating drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">🔮</div>
       </div>
 
       <AdBanner type="banner" />
@@ -609,201 +599,82 @@ const ZodiacPage = () => {
   const handleZodiacClick = async (nama: string) => {
     setIsLoading(true);
     setSelectedZodiac(nama);
-    
     const dbFortune = await fetchZodiacFromDB(nama);
     if (dbFortune) {
       setFortune(dbFortune);
-      setIsLoading(false);
-      return;
-    }
-
-    const aiResult = await getZodiacFortune(nama);
-    if (aiResult) {
-      setFortune(aiResult);
-      await saveZodiacToDB(nama, aiResult);
+    } else {
+      const aiResult = await getZodiacFortune(nama);
+      if (aiResult) {
+        setFortune(aiResult);
+        await saveZodiacToDB(nama, aiResult);
+      }
     }
     setIsLoading(false);
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-10">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       {!selectedZodiac ? (
         <>
-          <header className="space-y-4">
-            <h2 className="text-4xl font-cinzel font-bold leading-tight">Garis <span className="text-[#FFD700]">Takdir</span></h2>
-            <p className="text-sm text-gray-500 font-poppins">Pilih rasi bintangmu untuk menyingkap nasib hari ini.</p>
+          <header className="space-y-4 text-center">
+            <h2 className="text-4xl font-cinzel font-bold leading-tight">Garis <span className="gold-glow-text">Bintang</span></h2>
+            <p className="text-sm text-gray-500 font-poppins px-8">Sentuh rasi bintangmu untuk menyingkap nasib yang tertulis di langit.</p>
           </header>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-5">
             {ZODIAC_LIST.map((z, idx) => (
               <motion.button
                 key={z.nama}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ delay: idx * 0.04 }}
                 onClick={() => handleZodiacClick(z.nama)}
-                className="bg-[#1A1A2E]/50 backdrop-blur-md border border-white/5 p-6 rounded-[2rem] flex flex-col items-center gap-3 hover:border-[#FFD700]/30 transition-all active:scale-95 group"
+                className="mystic-card p-6 rounded-[2.5rem] flex flex-col items-center gap-4 group border-none"
               >
-                <span className="text-4xl group-hover:scale-110 transition-transform">{z.icon}</span>
+                <span className="text-5xl group-hover:scale-115 transition-transform group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]">{z.icon}</span>
                 <div className="text-center">
-                  <p className="text-xs font-bold uppercase tracking-widest text-white">{z.nama}</p>
-                  <p className="text-[8px] text-gray-500 font-medium mt-1 uppercase tracking-tighter">{z.tanggal}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">{z.nama}</p>
+                  <p className="text-[9px] text-gray-600 font-medium mt-1 uppercase tracking-tighter">{z.tanggal}</p>
                 </div>
               </motion.button>
             ))}
           </div>
         </>
       ) : (
-        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-8">
-          <button onClick={() => { setSelectedZodiac(null); setFortune(null); }} className="flex items-center gap-2 text-gray-500 text-[10px] font-bold uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full">
+        <motion.div initial={{ opacity: 0, filter: 'blur(10px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} className="space-y-10">
+          <button onClick={() => { setSelectedZodiac(null); setFortune(null); }} className="flex items-center gap-2 text-gray-500 text-[10px] font-bold uppercase tracking-widest bg-white/5 px-5 py-2.5 rounded-full">
             <ChevronRight size={14} className="rotate-180" /> Kembali
           </button>
 
           {fortune && (
             <>
-              <div className="flex flex-col items-center text-center space-y-4">
-                <span className="text-7xl drop-shadow-[0_0_15px_rgba(255,215,0,0.4)]">
+              <div className="flex flex-col items-center text-center space-y-8">
+                <span className="text-9xl drop-shadow-[0_0_30px_rgba(255,215,0,0.4)] animate-floating">
                   {ZODIAC_LIST.find(z => z.nama === selectedZodiac)?.icon}
                 </span>
-                <h1 className="text-4xl font-cinzel font-bold tracking-widest uppercase">{selectedZodiac}</h1>
+                <h1 className="text-6xl font-cinzel font-bold tracking-widest uppercase gold-glow-text">{selectedZodiac}</h1>
               </div>
 
-              <section className="bg-gradient-to-br from-[#1A1A2E] to-transparent p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
-                <h4 className="text-[#FFD700] text-xs font-bold uppercase tracking-[0.2em] mb-4">Kondisi Umum</h4>
-                <p className="text-gray-300 leading-relaxed font-poppins italic">"{fortune.umum}"</p>
+              <section className="mystic-card p-10 rounded-[3.5rem] relative overflow-hidden border-none">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#FFD700]/5 rounded-full blur-[80px]"></div>
+                <h4 className="text-[#FFD700] text-xs font-bold uppercase tracking-[0.3em] mb-5">Ramalan Semesta</h4>
+                <p className="text-gray-200 leading-relaxed font-poppins italic text-xl">"{fortune.umum}"</p>
               </section>
 
-              <div className="grid gap-6">
-                <div className="bg-[#7F5AF0]/5 border border-[#7F5AF0]/20 p-7 rounded-[2.5rem]">
-                  <h4 className="text-[#7F5AF0] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em] mb-3"><Heart size={16} /> Cinta</h4>
-                  <p className="text-sm text-gray-400 font-poppins">{fortune.cinta}</p>
+              <div className="grid gap-8">
+                <div className="mystic-card bg-[#7F5AF0]/5 p-8 rounded-[3rem] border-none">
+                  <h4 className="text-[#7F5AF0] font-bold flex items-center gap-4 text-xs uppercase tracking-[0.3em] mb-5"><Heart size={20} /> Cinta</h4>
+                  <p className="text-base text-gray-300 font-poppins leading-relaxed">{fortune.cinta}</p>
                 </div>
-                <div className="bg-[#2CB67D]/5 border border-[#2CB67D]/20 p-7 rounded-[2.5rem]">
-                  <h4 className="text-[#2CB67D] font-bold flex items-center gap-3 text-xs uppercase tracking-[0.2em] mb-3"><Briefcase size={16} /> Karir</h4>
-                  <p className="text-sm text-gray-400 font-poppins">{fortune.karir}</p>
+                <div className="mystic-card bg-[#2CB67D]/5 p-8 rounded-[3rem] border-none">
+                  <h4 className="text-[#2CB67D] font-bold flex items-center gap-4 text-xs uppercase tracking-[0.3em] mb-5"><Briefcase size={20} /> Karir</h4>
+                  <p className="text-base text-gray-300 font-poppins leading-relaxed">{fortune.karir}</p>
                 </div>
               </div>
             </>
           )}
         </motion.div>
       )}
-      <AdBanner type="banner" />
-    </motion.div>
-  );
-};
-
-const NumerologyPage = () => {
-  const { setIsLoading } = useAppContext();
-  const [dob, setDob] = useState('');
-  const [reading, setReading] = useState<any>(null);
-  const [lifePathNumber, setLifePathNumber] = useState<number | null>(null);
-
-  const calculateLifePath = (dateString: string) => {
-    const digits = dateString.replace(/-/g, '').split('').map(Number);
-    let sum = digits.reduce((a, b) => a + b, 0);
-    while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
-      sum = sum.toString().split('').map(Number).reduce((a, b) => a + b, 0);
-    }
-    return sum;
-  };
-
-  const handleCalculate = async () => {
-    if (!dob) return;
-    setIsLoading(true);
-    
-    const dbReading = await fetchNumerologyFromDB(dob);
-    const num = calculateLifePath(dob);
-    setLifePathNumber(num);
-
-    if (dbReading) {
-      setReading(dbReading);
-      setIsLoading(false);
-      return;
-    }
-
-    const result = await getNumerologyReading(num, dob);
-    
-    if (result) {
-      setReading(result);
-      await saveNumerologyToDB(dob, num, result);
-    }
-    setIsLoading(false);
-  };
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-10">
-      <header className="space-y-4 text-center">
-        <h2 className="text-4xl font-cinzel font-bold leading-tight">Rahasia <span className="text-[#2CB67D]">Numerik</span></h2>
-        <p className="text-sm text-gray-500 font-poppins">Temukan takdir yang tertulis dalam angka kelahiranmu.</p>
-      </header>
-
-      {!reading ? (
-        <section className="bg-[#1A1A2E]/50 backdrop-blur-xl p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
-          <div className="space-y-4 text-center">
-            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 block">Pilih Tanggal Lahir</label>
-            <input 
-              type="date" 
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className="w-full bg-[#0F0F1A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-[#2CB67D]/50 transition-all font-poppins text-center text-lg" 
-            />
-          </div>
-          <button 
-            onClick={handleCalculate}
-            disabled={!dob}
-            className="w-full bg-[#2CB67D] hover:bg-[#259b6a] disabled:opacity-50 py-5 rounded-2xl font-bold text-white shadow-xl shadow-[#2CB67D]/20 transition-all uppercase tracking-widest text-xs active:scale-95 flex items-center justify-center gap-3"
-          >
-            <Zap size={18} /> Singkap Takdir
-          </button>
-        </section>
-      ) : (
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
-          <div className="text-center space-y-6">
-            <div className="relative inline-block">
-               <div className="absolute inset-0 bg-[#2CB67D] blur-3xl opacity-20 animate-pulse"></div>
-               <div className="relative w-32 h-32 bg-gradient-to-br from-[#2CB67D] to-[#1A1A2E] rounded-full flex items-center justify-center border-4 border-[#2CB67D]/30 shadow-2xl">
-                 <span className="text-6xl font-cinzel font-bold text-white">{lifePathNumber}</span>
-               </div>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#2CB67D]">Angka Jalur Hidup</p>
-              <h3 className="text-xl font-cinzel font-bold mt-2">Sang Pencari Makna</h3>
-            </div>
-          </div>
-
-          <div className="grid gap-6">
-            <div className="bg-[#1A1A2E] p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-1 h-full bg-[#2CB67D]"></div>
-              <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2"><Hash size={16} /> Kepribadian</h4>
-              <p className="text-gray-300 leading-relaxed font-poppins italic">"{reading.kepribadian}"</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-                <h4 className="text-[9px] font-bold uppercase text-[#2CB67D] tracking-widest mb-3 flex items-center gap-2"><Briefcase size={12}/> Karir</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.karir}</p>
-              </div>
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-                <h4 className="text-[9px] font-bold uppercase text-[#7F5AF0] tracking-widest mb-3 flex items-center gap-2"><Heart size={12}/> Asmara</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.asmara}</p>
-              </div>
-            </div>
-
-            <div className="bg-[#2CB67D]/10 border border-[#2CB67D]/20 p-8 rounded-[2.5rem]">
-              <h4 className="text-[#2CB67D] text-xs font-bold uppercase tracking-widest mb-4">Saran Spiritual</h4>
-              <p className="text-sm text-gray-300 font-poppins italic">{reading.saran}</p>
-            </div>
-
-            <div className="flex items-center justify-between bg-white/5 p-6 rounded-3xl border border-white/10">
-               <span className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Batu Keberuntungan</span>
-               <span className="text-[#2CB67D] font-bold font-cinzel tracking-widest">{reading.batu_permata}</span>
-            </div>
-          </div>
-
-          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-colors">Coba Tanggal Lain</button>
-        </motion.div>
-      )}
-
       <AdBanner type="banner" />
     </motion.div>
   );
@@ -817,117 +688,101 @@ const JavaHoroscopePage = () => {
   const handleCalculate = async () => {
     if (!dob) return;
     setIsLoading(true);
-    
     const dbReading = await fetchPrimbonFromDB(dob);
     if (dbReading) {
       setReading(dbReading);
-      setIsLoading(false);
-      return;
-    }
-
-    const result = await getPrimbonReading(dob);
-    if (result) {
-      setReading(result);
-      await savePrimbonToDB(dob, result.weton, result.neptu, result);
+    } else {
+      const result = await getPrimbonReading(dob);
+      if (result) {
+        setReading(result);
+        await savePrimbonToDB(dob, result.weton, result.neptu, result);
+      }
     }
     setIsLoading(false);
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-10">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
-        <h2 className="text-4xl font-cinzel font-bold leading-tight">Primbon <span className="text-[#FF7E33]">Jawa</span></h2>
-        <p className="text-sm text-gray-500 font-poppins">Menyingkap serat kehidupan melalui hitungan weton leluhur.</p>
+        <h2 className="text-4xl font-cinzel font-bold leading-tight">Primbon <span className="text-[#FF7E33] drop-shadow-[0_0_10px_rgba(255,126,51,0.4)]">Jawa</span></h2>
+        <p className="text-sm text-gray-500 font-poppins px-6">Menyingkap serat kehidupan melalui hitungan weton leluhur nusantara.</p>
       </header>
 
       {!reading ? (
-        <section className="bg-[#1A1A2E]/50 backdrop-blur-xl p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
-          <div className="space-y-4 text-center">
-            <label className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 block">Kala Kelahiran (Tanggal Lahir)</label>
+        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none shadow-2xl">
+          <div className="space-y-6 text-center">
+            <label className="text-[10px] font-bold uppercase tracking-[0.5em] text-gray-600 block">Kala Kelahiran</label>
             <input 
               type="date" 
               value={dob}
               onChange={(e) => setDob(e.target.value)}
-              className="w-full bg-[#0F0F1A] border border-white/10 rounded-2xl py-5 px-6 text-white focus:outline-none focus:border-[#FF7E33]/50 transition-all font-poppins text-center text-lg" 
+              className="w-full bg-[#0F0F1A]/80 border border-orange-500/10 rounded-[2rem] py-7 px-8 text-white focus:outline-none focus:border-orange-500/40 transition-all font-poppins text-center text-2xl shadow-inner" 
             />
           </div>
           <button 
             onClick={handleCalculate}
             disabled={!dob}
-            className="w-full bg-[#FF7E33] hover:bg-[#e66a22] disabled:opacity-50 py-5 rounded-2xl font-bold text-white shadow-xl shadow-[#FF7E33]/20 transition-all uppercase tracking-widest text-xs active:scale-95 flex items-center justify-center gap-3"
+            className="w-full bg-[#FF7E33] hover:bg-[#e66a22] disabled:opacity-50 py-6 rounded-[2.5rem] font-bold text-white shadow-xl shadow-[#FF7E33]/20 transition-all uppercase tracking-[0.3em] text-xs active:scale-95 flex items-center justify-center gap-4"
           >
-            <Sun size={18} /> Hitung Weton
+            <Sun size={24} /> Singkap Weton
           </button>
         </section>
       ) : (
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="space-y-8">
-          <div className="text-center space-y-6">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+          <div className="text-center space-y-10">
             <div className="relative inline-block">
-               <div className="absolute inset-0 bg-[#FF7E33] blur-3xl opacity-20 animate-pulse"></div>
-               <div className="relative w-56 h-28 bg-gradient-to-br from-[#FF7E33] to-[#1A1A2E] rounded-3xl flex flex-col items-center justify-center border-4 border-[#FF7E33]/30 shadow-2xl px-4">
-                 <span className="text-2xl font-cinzel font-bold text-white uppercase tracking-wider">{reading.weton}</span>
-                 <span className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1">Neptu: {reading.neptu}</span>
+               <div className="absolute inset-0 bg-[#FF7E33] blur-[100px] opacity-25 animate-pulse"></div>
+               <div className="relative w-72 h-40 bg-gradient-to-br from-[#FF7E33] to-[#1A1A2E] rounded-[3.5rem] flex flex-col items-center justify-center border-4 border-[#FF7E33]/30 shadow-2xl px-8">
+                 <span className="text-4xl font-cinzel font-bold text-white uppercase tracking-widest glow-text">{reading.weton}</span>
+                 <div className="w-full h-[1px] bg-white/10 my-4"></div>
+                 <span className="text-[12px] text-white/90 font-bold uppercase tracking-[0.4em]">Neptu: {reading.neptu}</span>
                </div>
             </div>
-            <div className="px-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#FF7E33] mb-1">Pariweda Hari</p>
-              <h3 className="text-sm font-poppins font-semibold text-white italic bg-[#FF7E33]/10 py-3 px-4 rounded-2xl border border-[#FF7E33]/20">
+            <div className="px-6">
+              <h3 className="text-base font-poppins font-semibold text-white italic bg-[#FF7E33]/10 py-7 px-8 rounded-[2.5rem] border border-[#FF7E33]/20 shadow-2xl leading-relaxed">
                 "{reading.makna_hari}"
               </h3>
             </div>
           </div>
 
-          <div className="grid gap-6">
-            <div className="bg-[#1A1A2E] p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-1 h-full bg-[#FF7E33]"></div>
-              <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">Watak Bawaan</h4>
-              <p className="text-gray-300 leading-relaxed font-poppins italic">"{reading.watak}"</p>
+          <div className="grid gap-8">
+            <div className="mystic-card p-12 rounded-[3.5rem] relative border-none">
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#FF7E33] to-transparent rounded-full"></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Watak Bawaan</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins italic text-xl">"{reading.watak}"</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
-                <h4 className="text-[9px] font-bold uppercase text-[#FF7E33] tracking-widest flex items-center gap-2"><Briefcase size={12}/> Pekerjaan</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.pekerjaan}</p>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#FF7E33] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Pekerjaan</h4>
+                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.pekerjaan}</p>
               </div>
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
-                <h4 className="text-[9px] font-bold uppercase text-amber-500 tracking-widest flex items-center gap-2"><Store size={12}/> Bisnis Hoki</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.bisnis}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
-                <h4 className="text-[9px] font-bold uppercase text-[#7F5AF0] tracking-widest flex items-center gap-2"><Users size={12}/> Jodoh</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.jodoh}</p>
-              </div>
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3">
-                <h4 className="text-[9px] font-bold uppercase text-yellow-500 tracking-widest flex items-center gap-2"><Clock size={12}/> Hari Baik</h4>
-                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.hari_baik}</p>
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-amber-500 tracking-[0.3em] flex items-center gap-3"><Store size={18}/> Bisnis</h4>
+                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.bisnis}</p>
               </div>
             </div>
 
-            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Palette size={16} className="text-[#2CB67D]" />
-                  <span className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Warna Keberuntungan</span>
-                </div>
-                <span className="text-[#2CB67D] font-bold uppercase tracking-wider text-xs">{reading.warna}</span>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#7F5AF0] tracking-[0.3em] flex items-center gap-3"><Users size={18}/> Jodoh</h4>
+                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.jodoh}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-yellow-500 tracking-[0.3em] flex items-center gap-3"><Clock size={18}/> Hari Baik</h4>
+                <p className="text-[13px] text-gray-400 leading-relaxed font-poppins">{reading.hari_baik}</p>
+              </div>
             </div>
 
-            <div className="bg-[#FF7E33]/5 border border-[#FF7E33]/20 p-8 rounded-[2.5rem] space-y-4">
-              <h4 className="text-[#FF7E33] text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <Coins size={14} /> Ramalan Rejeki
+            <div className="mystic-card bg-[#FF7E33]/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-[#FF7E33] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Coins size={22} /> Rejeki
               </h4>
-              <p className="text-sm text-gray-300 font-poppins leading-relaxed italic">"{reading.rejeki}"</p>
-            </div>
-
-            <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-[#7F5AF0]">Saran Spiritual</h4>
-              <p className="text-sm text-gray-400 font-poppins italic leading-relaxed">{reading.saran}</p>
+              <p className="text-xl text-gray-300 font-poppins leading-relaxed italic">"{reading.rejeki}"</p>
             </div>
           </div>
 
-          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-colors">Coba Tanggal Lain</button>
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Coba Kala Lain</button>
         </motion.div>
       )}
 
@@ -936,152 +791,76 @@ const JavaHoroscopePage = () => {
   );
 };
 
-const TrendingPage = () => {
-  const { trendingDreams, setSelectedDream, setShowInterstitial, setCurrentPage } = useAppContext();
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8">
-      <header className="space-y-3">
-        <h2 className="text-4xl font-cinzel font-bold leading-tight flex items-center gap-4">
-          <Flame className="text-[#E53E3E]" fill="currentColor" size={32} />
-          Mimpi <span className="text-[#E53E3E]">Trens</span>
-        </h2>
-        <p className="text-sm text-gray-500 font-poppins">Tafsir yang paling banyak dicari oleh pencari hidayah.</p>
-      </header>
-
-      <div className="space-y-4">
-        {trendingDreams.map((dream, idx) => (
-          <motion.div 
-            key={dream.slug}
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: idx * 0.1 }}
-            onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }}
-            className="bg-[#1A1A2E]/60 border border-white/5 p-5 rounded-[2rem] flex items-center gap-5 hover:border-[#E53E3E]/30 cursor-pointer transition-all group shadow-xl"
-          >
-            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-lg font-cinzel font-bold text-gray-500 group-hover:text-[#E53E3E] group-hover:scale-110 transition-transform">
-              {idx + 1}
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-base font-poppins line-clamp-1">{dream.judul}</h4>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{dream.kategori}</p>
-            </div>
-            <div className="text-[#E53E3E] flex items-center gap-1">
-              <TrendingUp size={14} />
-              <span className="text-[10px] font-bold">{dream.view_count}</span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-};
-
-const FavoritePage = () => {
-  const { favorites, trendingDreams, setSelectedDream, setShowInterstitial, setCurrentPage } = useAppContext();
-  const favoriteItems = trendingDreams.filter(d => favorites.includes(d.slug));
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8">
-      <header className="space-y-3">
-        <h2 className="text-4xl font-cinzel font-bold leading-tight flex items-center gap-4">
-          <Bookmark className="text-[#7F5AF0]" fill="currentColor" size={32} />
-          Mimpi <span className="text-[#7F5AF0]">Favorit</span>
-        </h2>
-        <p className="text-sm text-gray-500 font-poppins">Kumpulan tafsir yang Anda simpan untuk dibaca kembali.</p>
-      </header>
-
-      {favoriteItems.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
-          {favoriteItems.map((dream) => (
-            <motion.div 
-              key={dream.slug}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }}
-              className="bg-[#1A1A2E]/40 border border-white/5 p-6 rounded-[2.5rem] space-y-4 hover:border-[#7F5AF0]/30 cursor-pointer transition-all shadow-xl"
-            >
-              <div className="w-10 h-10 bg-[#7F5AF0]/10 rounded-xl flex items-center justify-center text-[#7F5AF0]">
-                <Heart size={18} fill="currentColor" />
-              </div>
-              <h4 className="font-bold text-sm leading-tight line-clamp-2 font-poppins h-10">{dream.judul}</h4>
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#7F5AF0]">{dream.kategori}</span>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-4xl opacity-20">🖤</div>
-          <p className="text-gray-500 text-sm font-poppins italic max-w-[200px]">Belum ada mimpi yang ditandai sebagai favorit Anda.</p>
-          <button onClick={() => setCurrentPage(Page.HOME)} className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#7F5AF0] hover:underline">Mulai Mencari</button>
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
-// --- MAIN LAYOUT (PREMIUM UPGRADE) ---
+// --- MAIN LAYOUT ---
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentPage, setCurrentPage } = useAppContext();
   
-  const navItems = [
-    { id: Page.HOME, icon: Moon, label: 'Home' },
-    { id: Page.TRENDING, icon: TrendingUp, label: 'Hits' },
-    { id: Page.FAVORITE, icon: Heart, label: 'Favorit' }
-  ];
+  const runes = ['ꦀ', 'ꦁ', 'ꦂ', 'ꦃ', 'ꦄ', 'ꦅ', 'ꦆ', 'ꦇ', 'ꦈ', 'ꦉ', 'ꦊ', 'ꦋ', 'ꦌ', 'ꦍ', 'ꦎ'];
 
   return (
     <div className="max-w-md mx-auto min-h-screen flex flex-col relative bg-[#0F0F1A] text-white selection:bg-[#7F5AF0]/30 overflow-hidden">
-      <header className="px-6 py-5 flex items-center justify-between sticky top-0 z-40 bg-[#0F0F1A]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentPage(Page.HOME)}>
-          <div className="w-11 h-11 bg-gradient-to-br from-[#7F5AF0] to-[#6b48d1] rounded-2xl flex items-center justify-center shadow-xl shadow-[#7F5AF0]/20 group-hover:scale-110 transition-transform">
-            <Moon size={22} className="text-white" />
+      {/* Background Runes */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-[0.08]">
+        {[...Array(18)].map((_, i) => (
+          <div 
+            key={i} 
+            className="mystic-rune"
+            style={{ 
+              top: `${Math.random() * 100}%`, 
+              left: `${Math.random() * 100}%`, 
+              fontSize: `${25 + Math.random() * 70}px`,
+              animationDelay: `${Math.random() * 12}s`,
+              animationDuration: `${18 + Math.random() * 25}s`
+            }}
+          >
+            {runes[Math.floor(Math.random() * runes.length)]}
           </div>
-          <h1 className="font-cinzel text-2xl font-bold tracking-[0.2em] text-white uppercase">Misteri<span className="text-[#7F5AF0]">+</span></h1>
+        ))}
+      </div>
+
+      <header className="px-8 py-7 flex items-center justify-between sticky top-0 z-40 bg-[#0F0F1A]/85 backdrop-blur-2xl border-b border-white/5 shadow-2xl">
+        <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setCurrentPage(Page.HOME)}>
+          <div className="w-12 h-12 bg-gradient-to-br from-[#7F5AF0] to-[#6b48d1] rounded-2xl flex items-center justify-center shadow-xl shadow-[#7F5AF0]/25 group-hover:rotate-[15deg] transition-all">
+            <Moon size={26} className="text-white" />
+          </div>
+          <h1 className="font-cinzel text-2xl font-bold tracking-[0.4em] text-white uppercase glow-text">Misteri<span className="text-[#7F5AF0]">+</span></h1>
         </div>
-        <button onClick={() => setCurrentPage(Page.NUMEROLOGY)} className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all active:scale-90 ${currentPage === Page.NUMEROLOGY ? 'bg-[#2CB67D]/20 border-[#2CB67D]/50 shadow-[0_0_15px_#2CB67D33]' : 'bg-[#1A1A2E] border-white/5'}`}>
-          <Zap size={20} className={currentPage === Page.NUMEROLOGY ? 'text-[#2CB67D]' : 'text-[#7F5AF0]'} />
+        <button onClick={() => setCurrentPage(Page.NUMEROLOGY)} className="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/5 bg-[#1A1A2E]/60 active:scale-90 transition-all hover:border-[#7F5AF0]/40">
+          <Zap size={24} className="text-[#7F5AF0]" />
         </button>
       </header>
       
-      <main className="flex-1 px-6 pb-32">
+      <main className="flex-1 px-6 pb-40">
         {children}
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_40px_rgba(127,90,240,0.2)] h-20 flex items-center justify-around z-50">
-        <div className="absolute -bottom-2 w-32 h-2 bg-[#7F5AF0] blur-2xl opacity-40"></div>
-        
-        {navItems.map((item) => {
+      <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-[#1A1A2E]/65 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(127,90,240,0.15)] h-22 flex items-center justify-around z-50">
+        {[
+          { id: Page.HOME, icon: Moon, label: 'Ritual' },
+          { id: Page.TRENDING, icon: TrendingUp, label: 'Trens' },
+          { id: Page.FAVORITE, icon: Heart, label: 'Favorit' }
+        ].map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setCurrentPage(item.id)}
-              className="relative flex flex-col items-center justify-center w-16 group"
+              className="relative flex flex-col items-center justify-center w-20 group"
             >
               {isActive && (
                 <motion.div
                   layoutId="active-pill"
                   className="absolute inset-0 bg-[#7F5AF0]/20 rounded-2xl"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
                 />
               )}
-
-              <div
-                className={`relative z-10 p-2 rounded-xl transition-all duration-300
-                ${isActive 
-                  ? "text-[#7F5AF0] scale-125 drop-shadow-[0_0_10px_#7F5AF0]" 
-                  : "text-white/60 group-hover:text-white"}`}
-              >
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+              <div className={`relative z-10 transition-all duration-500 flex flex-col items-center ${isActive ? "text-[#7F5AF0] scale-125" : "text-gray-500 group-hover:text-gray-300"}`}>
+                <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`text-[9px] font-bold tracking-[0.3em] mt-2 transition-all duration-300 uppercase ${isActive ? "text-white opacity-100" : "opacity-0"}`}>
+                  {item.label}
+                </span>
               </div>
-
-              <span
-                className={`text-[9px] font-bold tracking-widest mt-1 transition-all duration-300 uppercase
-                ${isActive ? "text-white opacity-100" : "text-white/50 opacity-0 group-hover:opacity-100"}`}
-              >
-                {item.label}
-              </span>
             </button>
           );
         })}
@@ -1094,12 +873,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const AppContent = () => {
   const { currentPage, isLoading, showInterstitial, setShowInterstitial } = useAppContext();
   
-  const loadingMessages = ["Menghubungkan energi...", "Membaca pesan semesta...", "Menyingkap takdir...", "Menerjemahkan mimpi..."];
+  const loadingMessages = ["Menyambung dimensi...", "Membaca garis waktu...", "Memanggil energi leluhur...", "Menerjemahkan tabir..."];
   const [msgIdx, setMsgIdx] = useState(0);
 
   useEffect(() => {
     if (isLoading) {
-      const interval = setInterval(() => setMsgIdx(p => (p + 1) % loadingMessages.length), 1500);
+      const interval = setInterval(() => setMsgIdx(p => (p + 1) % loadingMessages.length), 2200);
       return () => clearInterval(interval);
     }
   }, [isLoading]);
@@ -1109,16 +888,40 @@ const AppContent = () => {
       case Page.HOME: return <HomePage />;
       case Page.DETAIL: return <DetailPage />;
       case Page.ZODIAC: return <ZodiacPage />;
-      case Page.NUMEROLOGY: return <NumerologyPage />;
-      case Page.TRENDING: return <TrendingPage />;
-      case Page.FAVORITE: return <FavoritePage />;
       case Page.JAVA_HOROSCOPE: return <JavaHoroscopePage />;
+      case Page.TRENDING: return (
+        <div className="py-6 space-y-12">
+          <header className="space-y-4 text-center">
+            <h2 className="text-4xl font-cinzel font-bold leading-tight">Mimpi <span className="text-[#E53E3E] drop-shadow-[0_0_10px_rgba(229,62,62,0.4)]">Hits</span></h2>
+            <p className="text-sm text-gray-500 font-poppins px-8">Tafsir yang paling sering menembus tabir kesadaran kolektif.</p>
+          </header>
+          <div className="space-y-5 px-2">
+            {[1,2,3,4,5,6].map(i => (
+               <div key={i} className="mystic-card p-8 rounded-[2.5rem] border-none flex items-center justify-between group cursor-pointer shadow-xl">
+                  <div className="flex items-center gap-6">
+                    <span className="text-3xl font-cinzel font-bold text-gray-800 group-hover:text-[#7F5AF0] transition-all">{i}</span>
+                    <div className="h-12 w-[1px] bg-white/10"></div>
+                    <div>
+                      <h4 className="font-bold font-poppins text-lg text-white group-hover:text-[#7F5AF0] transition-colors">Visi Kolektif #{i}</h4>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-1.5">Manifestasi Spiritual</p>
+                    </div>
+                  </div>
+                  <div className="bg-[#7F5AF0]/10 p-2.5 rounded-xl group-hover:bg-[#7F5AF0]/20 transition-all">
+                    <ChevronRight size={18} className="text-gray-600 group-hover:text-[#7F5AF0]" />
+                  </div>
+               </div>
+            ))}
+          </div>
+        </div>
+      );
       default: return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="text-8xl filter drop-shadow-[0_0_20px_rgba(127,90,240,0.4)]">🔮</motion.div>
-          <h2 className="text-3xl font-cinzel font-bold tracking-widest uppercase text-[#7F5AF0]">MEMBUKA ENERGI</h2>
-          <p className="text-gray-500 max-w-[250px] text-sm italic font-poppins leading-relaxed">Ruang mistis ini sedang disiapkan oleh para ahli numerologi kami.</p>
-          <button onClick={() => window.location.reload()} className="text-[10px] font-bold uppercase text-white/30 tracking-widest hover:text-[#7F5AF0]">Muat Ulang</button>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-12">
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 18, repeat: Infinity, ease: "linear" }} className="text-[10rem] filter drop-shadow-[0_0_40px_rgba(127,90,240,0.6)]">🔮</motion.div>
+          <div className="space-y-6">
+            <h2 className="text-5xl font-cinzel font-bold tracking-[0.4em] uppercase text-[#7F5AF0] glow-text">RITUAL</h2>
+            <p className="text-gray-500 max-w-[320px] text-base italic font-poppins leading-relaxed mx-auto">Ruang mistis ini sedang disiapkan oleh para oracle kami. Harap menunggu hingga energi terkumpul sempurna.</p>
+          </div>
+          <button onClick={() => window.location.reload()} className="text-[11px] font-bold uppercase text-white/20 tracking-[0.5em] hover:text-[#7F5AF0] transition-all">Muat Ulang Dimensi</button>
         </div>
       );
     }
@@ -1133,18 +936,24 @@ const AppContent = () => {
       {isLoading && (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-[#0F0F1A]/95 backdrop-blur-md flex flex-col items-center justify-center"
+          className="fixed inset-0 z-[60] bg-[#050508]/98 backdrop-blur-2xl flex flex-col items-center justify-center"
         >
           <div className="relative">
-             <div className="w-24 h-24 border-4 border-[#7F5AF0]/10 border-t-[#7F5AF0] rounded-full animate-spin"></div>
-             <div className="absolute inset-0 flex items-center justify-center text-3xl">✨</div>
+             <div className="w-40 h-40 border-[1px] border-[#7F5AF0]/10 border-t-[#7F5AF0] rounded-full animate-spin"></div>
+             <div className="absolute inset-0 flex items-center justify-center text-5xl animate-pulse">✨</div>
           </div>
-          <p className="font-cinzel text-xl tracking-[0.3em] text-[#7F5AF0] mt-10 animate-pulse uppercase">{loadingMessages[msgIdx]}</p>
+          <p className="font-cinzel text-2xl tracking-[0.5em] text-[#7F5AF0] mt-16 animate-pulse uppercase glow-text">{loadingMessages[msgIdx]}</p>
         </motion.div>
       )}
       
       <AnimatePresence mode="wait">
-        <motion.div key={currentPage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+        <motion.div 
+          key={currentPage} 
+          initial={{ opacity: 0, filter: 'blur(15px)', scale: 1.03 }} 
+          animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }} 
+          exit={{ opacity: 0, filter: 'blur(15px)', scale: 0.97 }} 
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
           {renderPage()}
         </motion.div>
       </AnimatePresence>

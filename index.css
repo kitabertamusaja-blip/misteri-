@@ -1,76 +1,170 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Poppins:wght@200;300;400;600;700&display=swap');
 
+:root {
+  --mystic-purple: #7F5AF0;
+  --mystic-purple-light: rgba(127, 90, 240, 0.4);
+  --mystic-gold: #FFD700;
+  --deep-abyss: #050508;
+  --mid-abyss: #121225;
+}
+
 body {
   margin: 0;
-  background-color: #0F0F1A;
+  background-color: var(--deep-abyss);
   color: #FFFFFF;
   font-family: 'Poppins', sans-serif;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
+  letter-spacing: 0.03em;
+}
+
+/* 1. Deep Abyss Background with Depth & Noise */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(127, 90, 240, 0.08), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(127, 90, 240, 0.05), transparent 50%),
+    radial-gradient(circle at center, var(--mid-abyss) 0%, var(--deep-abyss) 100%);
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: -1;
 }
 
 .font-cinzel {
   font-family: 'Cinzel', serif;
+  letter-spacing: 0.1em;
 }
 
-.font-poppins {
-  font-family: 'Poppins', sans-serif;
+/* 2. Smooth Glow Text (Multi-layered) */
+.glow-text {
+  text-shadow: 
+    0 0 6px rgba(127, 90, 240, 0.4),
+    0 0 12px rgba(127, 90, 240, 0.3),
+    0 0 24px rgba(127, 90, 240, 0.2);
 }
 
-/* Glassmorphism & Effects */
-.glass-effect {
+.gold-glow-text {
+  color: var(--mystic-gold);
+  text-shadow: 
+    0 0 4px rgba(255, 215, 0, 0.3),
+    0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+/* 3 & 5. Premium Glassmorphism with Gradient Borders */
+.mystic-card {
+  position: relative;
+  background: rgba(26, 26, 46, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 2.5rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+/* Gradient Border Effect */
+.mystic-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px; /* The border thickness */
+  background: linear-gradient(135deg, rgba(127, 90, 240, 0.35), transparent 60%);
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: background 0.4s ease;
+}
+
+/* Magical Lift and Glow on Hover */
+.mystic-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 50px -15px rgba(127, 90, 240, 0.25);
+}
+
+.mystic-card:hover::before {
+  background: linear-gradient(135deg, rgba(127, 90, 240, 0.6), transparent 80%);
+}
+
+/* 4. Global Micro-interactions for Buttons */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.94);
+}
+
+/* Mystical Search Bar Refresh */
+.oracle-input {
+  background: rgba(15, 15, 26, 0.85) !important;
+  border: 1px solid rgba(127, 90, 240, 0.2) !important;
+  box-shadow: 
+    inset 0 0 20px rgba(127, 90, 240, 0.05),
+    0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease !important;
+}
+
+.oracle-input:focus {
+  border-color: rgba(127, 90, 240, 0.6) !important;
+  box-shadow: 
+    0 0 25px rgba(127, 90, 240, 0.25),
+    0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+/* Custom Navigation Blur */
+.nav-blur {
   background: rgba(26, 26, 46, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
 }
 
-.glow-purple {
-  box-shadow: 0 0 20px rgba(127, 90, 240, 0.3);
+/* Floating Animation */
+@keyframes floating {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
-.text-glow {
-  text-shadow: 0 0 10px rgba(127, 90, 240, 0.5);
+.animate-floating {
+  animation: floating 5s infinite ease-in-out;
+}
+
+@keyframes rune-fade {
+  0%, 100% { opacity: 0; transform: scale(0.8) rotate(0deg); }
+  50% { opacity: 0.12; transform: scale(1.15) rotate(8deg); }
+}
+
+.mystic-rune {
+  position: absolute;
+  font-family: 'Cinzel', serif;
+  pointer-events: none;
+  color: var(--mystic-purple);
+  z-index: -1;
+  animation: rune-fade 12s infinite ease-in-out;
 }
 
 /* No Scrollbar Utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Form Styles */
-input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
-}
-
-/* Animations */
-@keyframes pulse-gentle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.98); }
-}
-
-.animate-pulse-gentle {
-  animation: pulse-gentle 3s infinite ease-in-out;
-}
-
-/* Custom Selection */
 ::selection {
-  background: #7F5AF0;
+  background: var(--mystic-purple);
   color: white;
-}
-
-/* Fix for iOS momentum scrolling */
-.overflow-x-auto {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Hide focus rings for non-keyboard users */
-:focus:not(:focus-visible) {
-  outline: none;
 }
