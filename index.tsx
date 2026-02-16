@@ -42,17 +42,6 @@ export interface Dream {
   view_count: number;
 }
 
-export interface ZodiacInfo {
-  id: number;
-  nama: string;
-  tanggal: string;
-  icon: string;
-  deskripsi: string;
-  cinta: string;
-  karir: string;
-  keuangan: string;
-}
-
 // --- CONSTANTS ---
 const ICONS = {
   Dream: Moon,
@@ -65,11 +54,11 @@ const ICONS = {
   Moon: Moon
 };
 
-const ZODIAC_LIST: ZodiacInfo[] = [
-  { id: 1, nama: 'Aries', tanggal: '21 Mar - 19 Apr', icon: '♈', deskripsi: 'Penuh energi.', cinta: 'Gairah meningkat.', karir: 'Fokus target.', keuangan: 'Waspada.' },
-  { id: 2, nama: 'Taurus', tanggal: '20 Apr - 20 Mei', icon: '♉', deskripsi: 'Stabil.', cinta: 'Harmonis.', karir: 'Dilirik bos.', keuangan: 'Menabung.' },
-  { id: 3, nama: 'Gemini', tanggal: '21 Mei - 20 Jun', icon: '♊', deskripsi: 'Cerdas.', cinta: 'Komunikasi.', karir: 'Ide baru.', keuangan: 'Investasi.' },
-  { id: 4, nama: 'Cancer', tanggal: '21 Jun - 22 Jul', icon: '♋', deskripsi: 'Intuitif.', cinta: 'Keluarga.', karir: 'Sensitif.', keuangan: 'Hemat.' }
+const ZODIAC_LIST = [
+  { id: 1, nama: 'Aries', tanggal: '21 Mar - 19 Apr', icon: '♈' },
+  { id: 2, nama: 'Taurus', tanggal: '20 Apr - 20 Mei', icon: '♉' },
+  { id: 3, nama: 'Gemini', tanggal: '21 Mei - 20 Jun', icon: '♊' },
+  { id: 4, nama: 'Cancer', tanggal: '21 Jun - 22 Jul', icon: '♋' }
 ];
 
 // --- SERVICES & API ---
@@ -95,9 +84,16 @@ const saveMimpiToDB = async (dreamData: any) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dreamData)
     });
-    return await response.json();
+    
+    const result = await response.json();
+    if (result.status === "success") {
+        console.log("✅ Berhasil simpan ke MySQL");
+    } else {
+        console.error("❌ Gagal simpan:", result.message);
+    }
+    return result;
   } catch (e) { 
-    console.error("DB Sync Error", e);
+    console.error("❌ Network Error/500:", e);
     return null;
   }
 };
@@ -108,6 +104,7 @@ const getAIInterpretation = async (userPrompt: string) => {
       model: "gemini-3-flash-preview",
       contents: `Berikan tafsir mimpi untuk: "${userPrompt}". Bahasa: Indonesia. Nuansa: Mistis, Bijak.`,
       config: {
+        thinkingConfig: { thinkingBudget: 0 }, // Mematikan thought signature agar tidak ada warning
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -123,6 +120,7 @@ const getAIInterpretation = async (userPrompt: string) => {
         }
       }
     });
+    // Gunakan .text property (bukan method)
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Gemini Error:", error);
@@ -205,7 +203,7 @@ const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void
           <div className="bg-[#7F5AF0] p-2 text-[10px] font-bold text-center tracking-widest text-white uppercase">Sponsor</div>
           <div className="p-8 text-center space-y-5">
             <div className="w-16 h-16 bg-[#7F5AF0]/20 rounded-2xl mx-auto flex items-center justify-center text-3xl">🔮</div>
-            <h3 className="text-xl font-bold font-cinzel">Buka Tabir Masa Depan</h3>
+            <h3 className="text-xl font-bold font-cinzel text-white">Buka Tabir Masa Depan</h3>
             <p className="text-sm text-gray-400">Dapatkan akses eksklusif ke ramalan bintang harian dan konsultasi spiritual.</p>
             <button onClick={onClose} className="w-full bg-[#7F5AF0] hover:bg-[#6b48d1] py-3 rounded-xl font-bold text-white shadow-lg shadow-[#7F5AF0]/20 active:scale-95">Lanjutkan ke Tafsir</button>
           </div>
@@ -220,16 +218,6 @@ const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void
     </div>
   );
 };
-
-const SectionTitle: React.FC<{ children: React.ReactNode, rightElement?: React.ReactNode }> = ({ children, rightElement }) => (
-  <div className="flex justify-between items-center mb-5 px-1">
-    <div className="flex items-center gap-3">
-      <div className="w-1.5 h-6 bg-[#7F5AF0] rounded-full shadow-[0_0_10px_#7F5AF0]"></div>
-      <h3 className="text-lg font-bold font-cinzel tracking-wider uppercase text-white">{children}</h3>
-    </div>
-    {rightElement}
-  </div>
-);
 
 // --- LAYOUT ---
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -285,10 +273,8 @@ const Home = () => {
     // 1. Cek di Database dulu
     const dbResults = await fetchFromDB(searchInput);
     if (dbResults && dbResults.length > 0) {
-        // Jika ada di DB, ambil yang paling relevan (index 0)
         const found = dbResults[0];
         setSelectedDream(found);
-        // Update view count di DB
         saveMimpiToDB(found); 
         setShowInterstitial(true);
         setCurrentPage(Page.DETAIL);
@@ -301,9 +287,8 @@ const Home = () => {
     if (result) {
         const dreamData = { ...result, view_count: 1 };
         setSelectedDream(dreamData);
-        // Simpan hasil AI ke DB untuk orang berikutnya
         await saveMimpiToDB(dreamData);
-        refreshTrending(); // Segarkan list populer
+        refreshTrending();
         setShowInterstitial(true);
         setCurrentPage(Page.DETAIL);
     }
@@ -311,7 +296,7 @@ const Home = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-8 text-white">
       <div className="space-y-4">
         <h2 className="text-4xl font-cinzel font-bold leading-tight">Apa pesan <br/><span className="text-[#7F5AF0] drop-shadow-[0_0_10px_#7F5AF0]">Semesta</span> bagimu?</h2>
         <div className="relative group">
@@ -331,7 +316,13 @@ const Home = () => {
       </div>
 
       <div>
-        <SectionTitle rightElement={<button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest">Semua</button>}>Mimpi Populer</SectionTitle>
+        <div className="flex justify-between items-center mb-5 px-1">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-[#7F5AF0] rounded-full shadow-[0_0_10px_#7F5AF0]"></div>
+            <h3 className="text-lg font-bold font-cinzel tracking-wider uppercase">Mimpi Populer</h3>
+          </div>
+          <button onClick={() => setCurrentPage(Page.TRENDING)} className="text-[#7F5AF0] text-[10px] font-bold uppercase tracking-widest">Semua</button>
+        </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
           {trendingDreams.length > 0 ? trendingDreams.map(dream => (
             <div key={dream.slug} onClick={() => { setSelectedDream(dream); saveMimpiToDB(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }} className="flex-shrink-0 w-44 bg-[#1A1A2E] p-5 rounded-3xl border border-white/5 space-y-4 hover:border-[#7F5AF0]/20 cursor-pointer transition-all active:scale-95">
@@ -350,7 +341,7 @@ const Home = () => {
       <div onClick={() => setCurrentPage(Page.ZODIAC)} className="bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] p-6 rounded-3xl border border-[#7F5AF0]/10 space-y-6 relative overflow-hidden cursor-pointer group">
         <div className="absolute -top-6 -right-6 text-[#7F5AF0]/5 transition-transform group-hover:scale-110 duration-500"><Sparkles size={140} /></div>
         <div className="flex justify-between items-start relative z-10">
-          <div><h3 className="text-xl font-bold font-cinzel">Bintangmu Hari Ini</h3><p className="text-xs text-gray-500">Cek keberuntungan zodiakmu.</p></div>
+          <div><h3 className="text-xl font-bold font-cinzel">Bintangmu Hari Ini</h3><p className="text-xs text-gray-400">Cek keberuntungan zodiakmu.</p></div>
           <div className="bg-[#7F5AF0] p-2 rounded-xl shadow-lg shadow-[#7F5AF0]/30 text-white"><Star size={16} /></div>
         </div>
         <div className="grid grid-cols-4 gap-4 relative z-10">
@@ -366,7 +357,7 @@ const DetailMimpi = () => {
   if (!selectedDream) return null;
 
   return (
-    <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="py-6 space-y-8">
+    <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="py-6 space-y-8 text-white">
       <button onClick={() => setCurrentPage(Page.HOME)} className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-widest"><ICONS.Next size={16} className="rotate-180" /> Kembali</button>
       <div className="space-y-4">
         <div className="flex justify-between items-start">

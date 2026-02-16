@@ -5,10 +5,10 @@
  */
 
 // 1. Matikan pelaporan error ke layar (agar tidak merusak JSON)
-error_reporting(0);
+error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
-// 2. Header CORS - Harus paling atas tanpa karakter apapun sebelumnya
+// 2. Header CORS - Harus paling atas
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept");
@@ -28,6 +28,9 @@ $db_name = "fach6357_misteri";
 $username = "fach6357_mridla";
 $password = "@@22Hari11Bulan"; 
 
+$conn = null;
+$db_error = null;
+
 try {
     $dsn = "mysql:host=$host;dbname=$db_name;charset=utf8mb4";
     $options = [
@@ -38,7 +41,6 @@ try {
     
     $conn = new PDO($dsn, $username, $password, $options);
 } catch (PDOException $e) {
-    $conn = null;
     $db_error = $e->getMessage();
 }
 
