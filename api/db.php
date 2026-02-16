@@ -19,10 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // 3. Konfigurasi Database
-$host = "localhost"; 
+$host = "127.0.0.1"; 
 $db_name = "fach6357_mistery";
-$username = "fach6357_mridla";
-$password = "@@22Hari11Bulan"; 
+$username = "fach6357_mistery";
+$password = "22hari11bulan"; 
 
 $conn = null;
 $db_error = null;
