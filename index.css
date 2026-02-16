@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Poppins:wght@200;300;400;600;700&display=swap');
+
 body {
   margin: 0;
   background-color: #0F0F1A;
@@ -6,6 +8,7 @@ body {
   font-family: 'Poppins', sans-serif;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
 }
 
 .font-cinzel {
@@ -16,6 +19,23 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
+/* Glassmorphism & Effects */
+.glass-effect {
+  background: rgba(26, 26, 46, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(127, 90, 240, 0.3);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(127, 90, 240, 0.5);
+}
+
+/* No Scrollbar Utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -24,34 +44,33 @@ body {
   scrollbar-width: none;
 }
 
-/* SOLID INPUTS & BUTTONS */
-input {
-  background-color: #1A1A2E !important;
-  color: white !important;
-  border: 1px solid #2A2A3E !important;
-  box-shadow: none !important;
-}
-
-input:focus {
-  border-color: #7F5AF0 !important;
-}
-
-button:active {
-  transform: scale(0.96);
-  transition: transform 0.1s ease;
-}
-
-/* SOLID CARDS & SECTIONS */
-.shadow-2xl {
-  box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.8);
+/* Form Styles */
+input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 /* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes pulse-gentle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
 }
 
-main {
-  animation: fadeIn 0.4s ease-out;
+.animate-pulse-gentle {
+  animation: pulse-gentle 3s infinite ease-in-out;
+}
+
+/* Custom Selection */
+::selection {
+  background: #7F5AF0;
+  color: white;
+}
+
+/* Fix for iOS momentum scrolling */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide focus rings for non-keyboard users */
+:focus:not(:focus-visible) {
+  outline: none;
 }
