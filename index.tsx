@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { 
@@ -677,6 +676,44 @@ export const useAppContext = () => {
 };
 
 // --- UI COMPONENTS ---
+const FloatingShareButton: React.FC<{ text: string }> = ({ text }) => {
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Misteri+',
+          text: text,
+          url: 'https://misteri.faciltrix.com/'
+        });
+      } catch (err) {
+        console.error("Gagal share:", err);
+      }
+    } else {
+      // Fallback for desktop: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${text} https://misteri.faciltrix.com/`);
+        alert("Pesan ramalan telah disalin!");
+      } catch (err) {
+        console.error("Gagal menyalin:", err);
+      }
+    }
+  };
+
+  return (
+    <motion.button
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={handleShare}
+      className="fixed bottom-32 right-6 z-[9500] w-16 h-16 bg-[#7F5AF0] rounded-full flex items-center justify-center shadow-[0_0_25px_rgba(127,90,240,0.6)] border border-white/20 active:scale-90 transition-all"
+    >
+      <Share2 size={28} className="text-white" />
+      <div className="absolute inset-0 rounded-full border-4 border-[#7F5AF0] animate-ping opacity-20 pointer-events-none"></div>
+    </motion.button>
+  );
+};
+
 const AdBanner: React.FC<{ type: 'banner' | 'interstitial', onClose?: () => void }> = ({ type, onClose }) => {
   if (type === 'interstitial') {
     const handleLanjutkan = () => {
@@ -744,6 +781,7 @@ const DetailPage = () => {
   if (!selectedDream) return null;
 
   const isFavorite = favorites.includes(selectedDream.slug);
+  const shareText = `Ternyata arti mimpiku tentang "${selectedDream.judul}" adalah: "${selectedDream.ringkasan}". Cek arti mimpimu di Misteri+ 🔮`;
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-6 space-y-8">
@@ -801,6 +839,7 @@ const DetailPage = () => {
       </div>
 
       <AdBanner type="banner" />
+      <FloatingShareButton text={shareText} />
     </motion.div>
   );
 };
@@ -825,6 +864,8 @@ const ZodiacPage = () => {
     }
     setIsLoading(false);
   };
+
+  const shareText = reading ? `Ramalan Zodiak ${selectedSign?.nama} hari ini: "${reading.umum}". Intip nasibmu di Misteri+ ✨` : "";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
@@ -889,6 +930,7 @@ const ZodiacPage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setSelectedSign(null); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Pilih Zodiak Lain</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
     </motion.div>
@@ -1028,6 +1070,8 @@ const TarotPage = () => {
     }, 1200);
   };
 
+  const shareText = reading ? `Aku mencabut kartu Tarot ${selectedCard?.name}. Nasihat Oracle: "${reading.nasihat}". Tanya Oracle di Misteri+ 🃏` : "";
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
@@ -1127,6 +1171,7 @@ const TarotPage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setQuestion(''); setSelectedCard(null); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Tanya Oracle Lagi</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
       <AdBanner type="banner" />
@@ -1158,6 +1203,8 @@ const CompatibilityPage = () => {
     }
     setIsLoading(false);
   };
+
+  const shareText = reading ? `Kecocokanku dengan ${name2} adalah ${reading.skor}%. Kami adalah "${reading.sebutan}". Cek jodohmu di Misteri+ ❤️` : "";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
@@ -1273,6 +1320,7 @@ const CompatibilityPage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setName1(''); setName2(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Coba Pasangan Lain</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
       <AdBanner type="banner" />
@@ -1459,6 +1507,8 @@ const ChineseZodiacPage = () => {
     setIsLoading(false);
   };
 
+  const shareText = reading ? `Shioku ${reading.shio}, Elemen ${reading.elemen}. Nasib 2026: "${reading.keberuntungan_2026}". Cek shiomu di Misteri+ 🐉` : "";
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
@@ -1547,6 +1597,7 @@ const ChineseZodiacPage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Hitung Ulang Shio</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
       <AdBanner type="banner" />
@@ -1574,6 +1625,8 @@ const SundanesePrimbonPage = () => {
     }
     setIsLoading(false);
   };
+
+  const shareText = reading ? `Wedalku ${reading.wedal}, Elemen ${reading.elemen}. Nasihat Leluhur: "${reading.nasihat}". Cek wedalmu di Misteri+ 🌳` : "";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
@@ -1658,6 +1711,7 @@ const SundanesePrimbonPage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Coba Kala Lain</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
 
@@ -1699,6 +1753,8 @@ const NumerologyPage = () => {
     }
     setIsLoading(false);
   };
+
+  const shareText = reading ? `Angka Jalur Hidupku adalah ${lifePath}! Kepribadian: "${reading.kepribadian}". Cek angkamu di Misteri+ 🔢` : "";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
@@ -1772,6 +1828,7 @@ const NumerologyPage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Hitung Ulang</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
       <AdBanner type="banner" />
@@ -1799,6 +1856,8 @@ const JavaHoroscopePage = () => {
     }
     setIsLoading(false);
   };
+
+  const shareText = reading ? `Wetonku ${reading.weton}, Neptu ${reading.neptu}. Watak: "${reading.watak}". Cek wetonmu di Misteri+ ☀️` : "";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
@@ -1883,6 +1942,7 @@ const JavaHoroscopePage = () => {
           </div>
 
           <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Coba Kala Lain</button>
+          <FloatingShareButton text={shareText} />
         </motion.div>
       )}
 
