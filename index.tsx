@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { 
@@ -47,7 +46,8 @@ export enum Page {
   JAVA_HOROSCOPE = 'java_horoscope',
   CHINESE_ZODIAC = 'chinese_zodiac',
   SUNDANESE_PRIMBON = 'sundanese_primbon',
-  COMMENT = 'comment'
+  COMMENT = 'comment',
+  TAROT = 'tarot'
 }
 
 export interface Dream {
@@ -91,9 +91,33 @@ const ZODIAC_LIST: ZodiacInfo[] = [
   { nama: 'Pisces', tanggal: '19 Feb - 20 Mar', icon: '♓' }
 ];
 
+const MAJOR_ARCANA = [
+  { id: 0, name: "The Fool", icon: "🃏" },
+  { id: 1, name: "The Magician", icon: "🧙‍♂️" },
+  { id: 2, name: "The High Priestess", icon: "🌙" },
+  { id: 3, name: "The Empress", icon: "👑" },
+  { id: 4, name: "The Emperor", icon: "⚔️" },
+  { id: 5, name: "The Hierophant", icon: "📜" },
+  { id: 6, name: "The Lovers", icon: "💖" },
+  { id: 7, name: "The Chariot", icon: "🛒" },
+  { id: 8, name: "Strength", icon: "🦁" },
+  { id: 9, name: "The Hermit", icon: "🕯️" },
+  { id: 10, name: "Wheel of Fortune", icon: "🎡" },
+  { id: 11, name: "Justice", icon: "⚖️" },
+  { id: 12, name: "The Hanged Man", icon: "🧘" },
+  { id: 13, name: "Death", icon: "💀" },
+  { id: 14, name: "Temperance", icon: "🍷" },
+  { id: 15, name: "The Devil", icon: "😈" },
+  { id: 16, name: "The Tower", icon: "🏰" },
+  { id: 17, name: "The Star", icon: "⭐" },
+  { id: 18, name: "The Moon", icon: "🌙" },
+  { id: 19, name: "The Sun", icon: "☀️" },
+  { id: 20, name: "Judgement", icon: "🎺" },
+  { id: 21, name: "The World", icon: "🌍" }
+];
+
 // --- API INITIALIZATION ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-// Menghilangkan 'www' agar sesuai dengan origin https://misteri.faciltrix.com
 const PROD_API_URL = 'https://misteri.faciltrix.com/api'; 
 const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost/misteri-api' : PROD_API_URL; 
 
@@ -234,6 +258,31 @@ const saveSundaToDB = async (dob: string, reading: any) => {
     });
   } catch (e) {
     console.error("Network error saat simpan Sunda:", e);
+  }
+};
+
+const fetchTarotFromDB = async (question: string, cardName: string) => {
+  try {
+    const date = new Date().toISOString().split('T')[0];
+    const response = await fetch(`${API_BASE_URL}/get-tarot.php?q=${encodeURIComponent(question)}&card=${encodeURIComponent(cardName)}&date=${date}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.status === 'success' ? data.data : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const saveTarotToDB = async (question: string, cardName: string, reading: any) => {
+  try {
+    const date = new Date().toISOString().split('T')[0];
+    await fetch(`${API_BASE_URL}/save-tarot.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, card_name: cardName, content: reading, date })
+    });
+  } catch (e) {
+    console.error("Network error saat simpan Tarot:", e);
   }
 };
 
@@ -458,6 +507,37 @@ const getSundanesePrimbonReading = async (dob: string) => {
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Sundanese Primbon AI Error:", error);
+    return null;
+  }
+};
+
+const getTarotReading = async (cardName: string, question: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Berikan pembacaan kartu Tarot untuk kartu: "${cardName}". 
+      Pertanyaan user: "${question || 'Ramalan harian'}".
+      Berikan interpretasi mendalam untuk tahun 2026. 
+      Sertakan makna spiritual kartu tersebut.
+      Bahasa: Indonesia. Nuansa: Mistis, Bijak, Berwibawa.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            makna_umum: { type: Type.STRING },
+            spiritual: { type: Type.STRING },
+            karir: { type: Type.STRING },
+            asmara: { type: Type.STRING },
+            nasihat: { type: Type.STRING }
+          },
+          required: ["makna_umum", "spiritual", "karir", "asmara", "nasihat"]
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (error) {
+    console.error("Tarot AI Error:", error);
     return null;
   }
 };
@@ -856,6 +936,145 @@ const CommentPage = () => {
   );
 };
 
+const TarotPage = () => {
+  const { setIsLoading } = useAppContext();
+  const [question, setQuestion] = useState('');
+  const [selectedCard, setSelectedCard] = useState<typeof MAJOR_ARCANA[0] | null>(null);
+  const [reading, setReading] = useState<any>(null);
+  const [isFlipping, setIsFlipping] = useState(false);
+
+  const handleDrawCard = async () => {
+    setIsFlipping(true);
+    setIsLoading(true);
+    
+    // Pilih kartu acak
+    const randomCard = MAJOR_ARCANA[Math.floor(Math.random() * MAJOR_ARCANA.length)];
+    setSelectedCard(randomCard);
+
+    // Cek Cache
+    const cached = await fetchTarotFromDB(question, randomCard.name);
+    if (cached) {
+      setReading(cached);
+    } else {
+      const result = await getTarotReading(randomCard.name, question);
+      if (result) {
+        setReading(result);
+        await saveTarotToDB(question, randomCard.name, result);
+      }
+    }
+    
+    setTimeout(() => {
+      setIsFlipping(false);
+      setIsLoading(false);
+    }, 1200);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Oracle <span className="text-[#A78BFA] drop-shadow-[0_0_10px_rgba(167,139,250,0.4)]">Tarot</span></h2>
+        <p className="text-sm text-gray-500 font-poppins px-6">Konsultasikan takdir Anda melalui simbol kuno Major Arcana untuk tahun 2026.</p>
+      </header>
+
+      {!reading ? (
+        <section className="space-y-10">
+          <div className="mystic-card p-8 rounded-[3rem] border-none shadow-2xl">
+            <div className="space-y-4">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-2">Apa yang ingin Anda ketahui?</label>
+              <textarea 
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Tuliskan pertanyaan Anda (opsional)..."
+                rows={3}
+                className="w-full oracle-input rounded-2xl py-4 px-6 text-white text-sm focus:outline-none placeholder:text-gray-700 resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-8">
+            <div className="relative w-48 h-72 perspective-1000">
+              <motion.div 
+                animate={isFlipping ? { rotateY: 180 } : { rotateY: 0 }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+                className="w-full h-full relative preserve-3d"
+              >
+                {/* Back of Card */}
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] border-4 border-[#7F5AF0]/30 rounded-[2rem] flex items-center justify-center backface-hidden shadow-2xl">
+                   <div className="w-full h-full p-4 flex flex-col items-center justify-center gap-4 opacity-40">
+                      <div className="w-16 h-16 border-2 border-[#7F5AF0] rounded-full flex items-center justify-center">
+                        <Moon size={32} className="text-[#7F5AF0]"/>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[...Array(4)].map((_, i) => <div key={i} className="w-2 h-2 bg-[#7F5AF0] rounded-full"></div>)}
+                      </div>
+                   </div>
+                </div>
+              </motion.div>
+            </div>
+            
+            <button 
+              onClick={handleDrawCard}
+              className="w-full max-w-xs bg-gradient-to-r from-[#7F5AF0] to-[#6b48d1] py-5 rounded-[2.5rem] font-bold text-white shadow-xl shadow-[#7F5AF0]/20 transition-all uppercase tracking-[0.3em] text-xs active:scale-95 flex items-center justify-center gap-4"
+            >
+              <Sparkles size={20} /> Ambil Satu Kartu
+            </button>
+          </div>
+        </section>
+      ) : (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+          <div className="text-center space-y-8">
+             <motion.div 
+              initial={{ rotateY: 180 }}
+              animate={{ rotateY: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-56 h-80 mx-auto bg-gradient-to-br from-[#1A1A2E] to-[#0F0F1A] border-4 border-[#A78BFA] rounded-[3rem] flex flex-col items-center justify-center shadow-[0_0_50px_rgba(167,139,250,0.3)] relative overflow-hidden"
+             >
+                <div className="absolute inset-0 bg-gradient-to-t from-[#A78BFA]/10 to-transparent"></div>
+                <span className="text-8xl mb-4 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">{selectedCard?.icon}</span>
+                <span className="text-2xl font-cinzel font-bold text-white uppercase tracking-widest text-center px-4">{selectedCard?.name}</span>
+             </motion.div>
+             <h3 className="text-sm font-bold text-[#A78BFA] uppercase tracking-[0.4em]">Wahyu Terbuka</h3>
+          </div>
+
+          <div className="grid gap-8">
+            <div className="mystic-card p-10 rounded-[3.5rem] relative border-none">
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#A78BFA] to-transparent rounded-full"></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Manifestasi 2026</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins italic text-lg text-white">"{reading.makna_umum}"</p>
+            </div>
+
+            <div className="mystic-card bg-[#A78BFA]/5 p-10 rounded-[3rem] border-none space-y-4">
+               <h4 className="text-[10px] font-bold uppercase text-[#A78BFA] tracking-[0.3em] flex items-center gap-3"><Compass size={18}/> Dimensi Spiritual</h4>
+               <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.spiritual}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#2CB67D] tracking-[0.3em] flex items-center gap-3"><Briefcase size={18}/> Karir</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.karir}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none">
+                <h4 className="text-[10px] font-bold uppercase text-[#E53E3E] tracking-[0.3em] flex items-center gap-3"><Heart size={18}/> Asmara</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.asmara}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card bg-white/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-white text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Star size={22} className="text-yellow-500" /> Nasihat Oracle
+              </h4>
+              <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.nasihat}"</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setQuestion(''); setSelectedCard(null); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Tanya Oracle Lagi</button>
+        </motion.div>
+      )}
+      <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
 const HomePage = () => {
   const { setCurrentPage, setSelectedDream, setShowInterstitial, setIsLoading, trendingDreams, refreshTrending, latestComments } = useAppContext();
   const [searchInput, setSearchInput] = useState('');
@@ -927,12 +1146,13 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Grid Kategori Beranda - Professional Grid for 6 Items */}
+      {/* Grid Kategori Beranda - Update ke 7 Item */}
       <section className="grid grid-cols-3 gap-3 px-1">
         {[
           { label: 'Tafsir', id: Page.HOME, icon: <Moon size={16} />, color: '#7F5AF0' }, 
           { label: 'Zodiak', id: Page.ZODIAC, icon: <Sparkles size={16} />, color: '#FFD700' }, 
           { label: 'Numerik', id: Page.NUMEROLOGY, icon: <Zap size={16} />, color: '#2CB67D' }, 
+          { label: 'Tarot', id: Page.TAROT, icon: <Compass size={16} />, color: '#A78BFA' },
           { label: 'P. Jawa', id: Page.JAVA_HOROSCOPE, icon: <Sun size={16} />, color: '#FF7E33' },
           { label: 'Shio', id: Page.CHINESE_ZODIAC, icon: <Crown size={16} />, color: '#E53E3E' },
           { label: 'P. Sunda', id: Page.SUNDANESE_PRIMBON, icon: <Trees size={16} />, color: '#14B8A6' }
@@ -957,7 +1177,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Section Komentar 3 Hasil Terbaru - Persis di bawah teks HITS */}
         <div className="px-2 space-y-5">
           <div className="grid grid-cols-1 gap-3">
             {latestComments.slice(0, 3).map((comment) => (
@@ -976,7 +1195,6 @@ const HomePage = () => {
             )}
           </div>
 
-          {/* Posisi Baru LIHAT SEMUA (Menuju Ruang Diskusi/Komentar) */}
           <div className="flex justify-center pt-2">
             <button 
               onClick={() => setCurrentPage(Page.COMMENT)} 
@@ -1497,7 +1715,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <header className="px-8 py-7 flex items-center justify-between sticky top-0 z-40 bg-[#0F0F1A]/85 backdrop-blur-2xl border-b border-white/5 shadow-2xl">
         <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setCurrentPage(Page.HOME)}>
           <div className="w-12 h-12 bg-gradient-to-br from-[#7F5AF0] to-[#6b48d1] rounded-2xl flex items-center justify-center shadow-xl shadow-[#7F5AF0]/25 group-hover:rotate-[15deg] transition-all">
-            <Moon size={26} className="text-white" />
+            < Moon size={26} className="text-white" />
           </div>
           <h1 className="font-cinzel text-2xl font-bold tracking-[0.4em] text-white uppercase glow-text">Misteri<span className="text-[#7F5AF0]">+</span></h1>
         </div>
@@ -1588,11 +1806,12 @@ const AppContent = () => {
       case Page.HOME: return <HomePage />;
       case Page.DETAIL: return <DetailPage />;
       case Page.ZODIAC: return <ZodiacPage />;
-      case Page.NUMEROLOGY: return <CommentPage />; // Fallback placeholder
+      case Page.NUMEROLOGY: return <NumerologyPage />;
       case Page.JAVA_HOROSCOPE: return <JavaHoroscopePage />;
       case Page.CHINESE_ZODIAC: return <ChineseZodiacPage />;
       case Page.SUNDANESE_PRIMBON: return <SundanesePrimbonPage />;
       case Page.COMMENT: return <CommentPage />;
+      case Page.TAROT: return <TarotPage />;
       case Page.TRENDING: return (
         <div className="py-6 space-y-12">
           <header className="space-y-4 text-center">
