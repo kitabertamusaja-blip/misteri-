@@ -93,7 +93,8 @@ const ZODIAC_LIST: ZodiacInfo[] = [
 
 // --- API INITIALIZATION ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const PROD_API_URL = 'https://www.misteri.faciltrix.com/api'; 
+// Menghilangkan 'www' agar sesuai dengan origin https://misteri.faciltrix.com
+const PROD_API_URL = 'https://misteri.faciltrix.com/api'; 
 const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost/misteri-api' : PROD_API_URL; 
 
 // --- SERVICES ---
@@ -954,7 +955,6 @@ const HomePage = () => {
             </h3>
             <div className="w-14 h-1.5 bg-gradient-to-r from-[#7F5AF0] to-transparent rounded-full mt-2"></div>
           </div>
-          {/* Tombol dipindahkan ke bawah komentar */}
         </div>
 
         {/* Section Komentar 3 Hasil Terbaru - Persis di bawah teks HITS */}
