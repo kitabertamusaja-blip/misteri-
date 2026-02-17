@@ -1,6 +1,22 @@
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # 1. PAKSA SEMUA KE NON-WWW (Agar Origin Konsisten)
+  RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+  # 2. PAKSA HTTPS (Opsional tapi sangat disarankan)
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # 3. SET HEADER CORS DI LEVEL SERVER (Solusi Permanen ERR_FAILED)
+  <IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, DELETE, PUT"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+  </IfModule>
 
   # Pastikan file script tidak dianggap HTML oleh browser
   AddType application/javascript .js .tsx .ts
@@ -9,10 +25,10 @@
     Header set Content-Type "application/javascript"
   </FilesMatch>
 
-  # Lewati folder API
+  # Lewati folder API agar tidak terkena aturan SPA
   RewriteRule ^api/ - [L]
 
-  # SPA Routing
+  # SPA Routing (Agar React Router/Framer-Motion berjalan mulus)
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
   
