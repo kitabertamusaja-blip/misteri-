@@ -30,7 +30,10 @@ import {
   Trees,
   MessageSquare,
   Send,
-  User
+  User,
+  Shield,
+  ZapOff,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -1321,8 +1324,30 @@ const HomePage = () => {
       </section>
 
       <section className="space-y-6">
+        <div className="flex justify-between items-end">
+          <h3 className="text-xl font-cinzel font-bold tracking-wider uppercase flex items-center gap-3 text-white">
+            <MessageSquare size={20} className="text-[#A78BFA]" /> Suara Gaib
+          </h3>
+          <button onClick={() => setCurrentPage(Page.COMMENT)} className="text-[10px] font-bold uppercase text-[#A78BFA] tracking-widest pb-1 border-b border-[#A78BFA]/30">Lihat Semua</button>
+        </div>
+        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 px-2 snap-x">
+          {latestComments.length > 0 ? latestComments.slice(0, 5).map((c) => (
+            <div key={c.id} className="flex-shrink-0 w-64 bg-[#1A1A2E]/40 border border-white/5 p-5 rounded-[2rem] space-y-2 snap-center">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-[10px] text-[#7F5AF0] uppercase tracking-widest">{c.name}</span>
+                <span className="text-[8px] text-gray-600 italic">{new Date(c.created_at).toLocaleDateString('id-ID')}</span>
+              </div>
+              <p className="text-[11px] text-gray-400 line-clamp-2 italic leading-relaxed">"{c.message}"</p>
+            </div>
+          )) : (
+            <div className="text-center py-4 opacity-30 text-[10px] tracking-widest uppercase w-full">Hening di dimensi ini...</div>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-6">
         <h3 className="text-xl font-cinzel font-bold tracking-wider uppercase flex items-center gap-3 text-white"><Flame size={20} className="text-[#7F5AF0]" /> Hits</h3>
-        <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 pt-6 px-4 snap-x">
+        <div className="flex gap-6 overflow-x-auto no-scrollbar pb-8 pt-2 px-4 snap-x">
           {trendingDreams.map(dream => (
             <div key={dream.slug} onClick={() => { setSelectedDream(dream); setShowInterstitial(true); setCurrentPage(Page.DETAIL); }} className="flex-shrink-0 w-56 mystic-card p-6 rounded-[2.5rem] space-y-5 cursor-pointer snap-center border-none">
               <div className="w-12 h-12 bg-[#7F5AF0]/10 rounded-2xl flex items-center justify-center text-[#7F5AF0]"><Sparkles size={22} /></div>
@@ -1337,12 +1362,11 @@ const HomePage = () => {
   );
 };
 
-// ... Halaman Lain (Primbon, Numerologi, Shio, dll) diimplementasikan dengan getAI... yang sudah direfactor ...
-
 const ChineseZodiacPage = () => {
   const { setIsLoading } = useAppContext();
   const [dob, setDob] = useState('');
   const [reading, setReading] = useState<any>(null);
+
   const handleCalculate = async () => {
     if (!dob) return;
     setIsLoading(true);
@@ -1350,32 +1374,85 @@ const ChineseZodiacPage = () => {
     if (dbReading) setReading(dbReading);
     else {
       const result = await getChineseZodiacReading(dob);
-      if (result) { setReading(result); await saveChineseZodiacToDB(dob, result); }
+      if (result) { 
+        setReading(result); 
+        await saveChineseZodiacToDB(dob, result); 
+      }
     }
     setIsLoading(false);
   };
+
   const shareText = reading ? `Shio: ${reading.shio}. Nasib 2026: "${reading.keberuntungan_2026}". Cek di Misteri+ 🐉` : "";
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold text-white">Primbon <span className="text-[#E53E3E]">China</span></h2>
+        <p className="text-sm text-gray-500 font-poppins">Garis langit dari tradisi kuno Oriental untuk tahun 2026.</p>
       </header>
+
       {!reading ? (
         <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none">
-          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#E53E3E]/30 rounded-[2rem] py-7 px-8 text-[#E53E3E] text-center text-2xl" />
-          <button onClick={handleCalculate} className="w-full bg-[#E53E3E] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest">Singkap Takdir Shio</button>
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 text-center block">Kapan Anda Dilahirkan?</label>
+            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#E53E3E]/30 rounded-[2rem] py-7 px-8 text-[#E53E3E] text-center text-2xl" />
+          </div>
+          <button onClick={handleCalculate} className="w-full bg-[#E53E3E] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest flex items-center justify-center gap-3">
+            <Sparkles size={20}/> Singkap Takdir Shio
+          </button>
         </section>
       ) : (
-        <div className="space-y-12">
-          <div className="text-center">
-            <span className="text-7xl block mb-4">{reading.icon}</span>
-            <span className="text-3xl font-cinzel font-bold text-white uppercase tracking-widest">Shio {reading.shio}</span>
+        <div className="space-y-10">
+          <div className="text-center space-y-4">
+            <div className="w-28 h-28 bg-[#E53E3E]/10 rounded-full mx-auto flex items-center justify-center text-6xl shadow-2xl border border-[#E53E3E]/20">
+              {reading.icon}
+            </div>
+            <h3 className="text-4xl font-cinzel font-bold text-white uppercase tracking-widest">Shio {reading.shio}</h3>
+            <div className="flex justify-center gap-4">
+              <span className="text-[10px] font-bold uppercase bg-[#E53E3E]/20 text-[#E53E3E] px-4 py-1.5 rounded-full border border-[#E53E3E]/30">{reading.elemen}</span>
+              <span className="text-[10px] font-bold uppercase bg-[#1A1A2E] text-gray-400 px-4 py-1.5 rounded-full border border-white/10">{reading.energi}</span>
+            </div>
           </div>
-          <div className="grid gap-8">
-            <div className="mystic-card p-10 rounded-[3.5rem] border-none"><p className="text-gray-200 italic text-lg text-white">"{reading.karakter}"</p></div>
-            <div className="mystic-card bg-[#E53E3E]/5 p-12 rounded-[4rem] space-y-6 border-none"><h4 className="text-[#E53E3E] text-xs font-bold uppercase tracking-widest">Nasib 2026</h4><p className="text-xl text-gray-200 italic text-white">"{reading.keberuntungan_2026}"</p></div>
+
+          <div className="grid gap-6">
+            <div className="mystic-card p-10 rounded-[3.5rem] border-none relative">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#E53E3E]"></div>
+              <h4 className="text-[9px] font-bold uppercase text-gray-600 tracking-widest mb-4">Karakter Dasar</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins italic text-lg text-white">"{reading.karakter}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#2CB67D] flex items-center gap-2"><Briefcase size={14}/> Karir</h4>
+                <p className="text-[12px] text-gray-400 leading-relaxed">{reading.karir}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#F472B6] flex items-center gap-2"><Heart size={14}/> Asmara</h4>
+                <p className="text-[12px] text-gray-400 leading-relaxed">{reading.asmara}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card bg-[#E53E3E]/5 p-10 rounded-[3.5rem] border-none space-y-6">
+              <div className="flex items-center gap-4">
+                 <div className="p-3 bg-[#E53E3E]/20 rounded-2xl"><Flame size={24} className="text-[#E53E3E]"/></div>
+                 <h4 className="text-white text-sm font-bold uppercase tracking-widest">Ramalan Keberuntungan 2026</h4>
+              </div>
+              <p className="text-lg text-gray-300 italic font-poppins leading-relaxed">"{reading.keberuntungan_2026}"</p>
+            </div>
+
+            <div className="mystic-card bg-[#1A1A2E] p-8 rounded-[3rem] border-none flex justify-between items-center">
+               <div className="space-y-1">
+                 <h4 className="text-[9px] font-bold uppercase text-gray-500">Jodoh Cocok</h4>
+                 <p className="text-white font-bold">{reading.jodoh_cocok}</p>
+               </div>
+               <div className="text-right space-y-1">
+                 <h4 className="text-[9px] font-bold uppercase text-gray-500">Warna Hoki</h4>
+                 <p className="text-[#E53E3E] font-bold uppercase">{reading.warna_hoki}</p>
+               </div>
+            </div>
           </div>
-          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-widest text-gray-600">Hitung Ulang</button>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-widest text-gray-600 hover:text-white transition-all">Hitung Ulang Shio</button>
           <FloatingShareButton text={shareText} />
         </div>
       )}
@@ -1387,6 +1464,7 @@ const SundanesePrimbonPage = () => {
   const { setIsLoading } = useAppContext();
   const [dob, setDob] = useState('');
   const [reading, setReading] = useState<any>(null);
+
   const handleCalculate = async () => {
     if (!dob) return;
     setIsLoading(true);
@@ -1394,27 +1472,83 @@ const SundanesePrimbonPage = () => {
     if (dbReading) setReading(dbReading);
     else {
       const result = await getSundanesePrimbonReading(dob);
-      if (result) { setReading(result); await saveSundaToDB(dob, result); }
+      if (result) { 
+        setReading(result); 
+        await saveSundaToDB(dob, result); 
+      }
     }
     setIsLoading(false);
   };
+
   const shareText = reading ? `Wedalku: ${reading.wedal}. Nasihat: "${reading.nasihat}". Cek di Misteri+ 🌳` : "";
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
       <header className="space-y-4 text-center">
         <h2 className="text-4xl font-cinzel font-bold text-white">Primbon <span className="text-[#14B8A6]">Sunda</span></h2>
+        <p className="text-sm text-gray-500 font-poppins">Maca takdir tina Paririmbon Sunda pikeun taun 2026.</p>
       </header>
+
       {!reading ? (
         <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none">
-          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#14B8A6]/30 rounded-[2rem] py-7 px-8 text-[#14B8A6] text-center text-2xl" />
-          <button onClick={handleCalculate} className="w-full bg-[#14B8A6] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest">Singkap Paririmbon</button>
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 text-center block">Tanggal Wedal Anda?</label>
+            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#14B8A6]/30 rounded-[2rem] py-7 px-8 text-[#14B8A6] text-center text-2xl" />
+          </div>
+          <button onClick={handleCalculate} className="w-full bg-[#14B8A6] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest flex items-center justify-center gap-3">
+            <Trees size={20}/> Singkap Paririmbon
+          </button>
         </section>
       ) : (
-        <div className="space-y-12 text-white">
-          <div className="text-center"><span className="text-3xl font-cinzel font-bold text-white uppercase tracking-widest">Wedal: {reading.wedal}</span></div>
-          <div className="mystic-card p-12 rounded-[3.5rem] border-none"><h4 className="text-[10px] font-bold uppercase text-gray-600 mb-6">Watak Dasar</h4><p className="text-gray-200 text-xl italic">"{reading.watak}"</p></div>
-          <div className="mystic-card bg-white/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl"><h4 className="text-[#14B8A6] text-xs font-bold uppercase tracking-widest">Piwuruk 2026</h4><p className="text-xl text-gray-200 italic">"{reading.nasihat}"</p></div>
-          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase text-gray-600">Coba Kala Lain</button>
+        <div className="space-y-10 text-white">
+          <div className="text-center space-y-4">
+             <div className="inline-block bg-[#14B8A6]/10 px-8 py-4 rounded-[2.5rem] border border-[#14B8A6]/20 shadow-2xl">
+               <h3 className="text-3xl font-cinzel font-bold text-[#14B8A6] uppercase tracking-widest">Wedal: {reading.wedal}</h3>
+               <p className="text-[10px] font-bold uppercase text-gray-500 mt-2 tracking-widest">Elemen: {reading.elemen}</p>
+             </div>
+          </div>
+
+          <div className="grid gap-6">
+            <div className="mystic-card p-10 rounded-[3.5rem] border-none relative">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#14B8A6]"></div>
+              <h4 className="text-[9px] font-bold uppercase text-gray-600 tracking-widest mb-4">Paripolah (Watak)</h4>
+              <p className="text-gray-200 text-lg italic leading-relaxed font-poppins text-white">"{reading.watak}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-4">
+                <h4 className="text-[9px] font-bold uppercase text-[#14B8A6] flex items-center gap-2"><Coins size={14}/> Rejeki</h4>
+                <p className="text-[12px] text-gray-400 leading-relaxed">{reading.rejeki}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-4">
+                <h4 className="text-[9px] font-bold uppercase text-[#F472B6] flex items-center gap-2"><Heart size={14}/> Jodoh</h4>
+                <p className="text-[12px] text-gray-400 leading-relaxed">{reading.jodoh}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="mystic-card bg-[#14B8A6]/5 p-8 rounded-[3rem] border-none space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#2CB67D] flex items-center gap-2"><Calendar size={14}/> Hari Baik</h4>
+                <p className="text-[12px] text-gray-300 leading-relaxed">{reading.hari_baik}</p>
+              </div>
+              <div className="mystic-card bg-red-500/5 p-8 rounded-[3rem] border-none space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#E53E3E] flex items-center gap-2"><ZapOff size={14}/> Pantangan</h4>
+                <p className="text-[12px] text-gray-300 leading-relaxed">{reading.pantangan}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card p-10 rounded-[3.5rem] border-none space-y-4">
+              <h4 className="text-[9px] font-bold uppercase text-gray-600 tracking-widest">Makna Filosofis</h4>
+              <p className="text-gray-300 leading-relaxed italic">"{reading.makna_filosofis}"</p>
+            </div>
+
+            <div className="mystic-card bg-white/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-[#14B8A6] text-xs font-bold uppercase tracking-widest flex items-center gap-3"><Compass size={20}/> Piwuruk (Nasihat) 2026</h4>
+              <p className="text-xl text-gray-200 italic font-poppins leading-relaxed">"{reading.nasihat}"</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all tracking-[0.4em]">Coba Kala Lain</button>
           <FloatingShareButton text={shareText} />
         </div>
       )}
@@ -1422,11 +1556,125 @@ const SundanesePrimbonPage = () => {
   );
 };
 
+const JavaHoroscopePage = () => {
+  const { setIsLoading } = useAppContext();
+  const [dob, setDob] = useState('');
+  const [reading, setReading] = useState<any>(null);
+
+  const handleCalculate = async () => {
+    if (!dob) return;
+    setIsLoading(true);
+    const dbReading = await fetchPrimbonFromDB(dob);
+    if (dbReading) setReading(dbReading);
+    else {
+      const result = await getPrimbonReading(dob);
+      if (result) { 
+        setReading(result); 
+        await savePrimbonToDB(dob, result.weton, result.neptu, result); 
+      }
+    }
+    setIsLoading(false);
+  };
+
+  const shareText = reading ? `Weton: ${reading.weton}. Watak: "${reading.watak}". Cek di Misteri+ ☀️` : "";
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold text-white">Primbon <span className="text-[#FF7E33]">Jawa</span></h2>
+        <p className="text-sm text-gray-500 font-poppins">Kaweruh takdir dumasar kana weton lan pasaran Jawa taun 2026.</p>
+      </header>
+
+      {!reading ? (
+        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none">
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 text-center block">Kapan Anda Lahir?</label>
+            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#FF7E33]/30 rounded-[2rem] py-7 px-8 text-[#FF7E33] text-center text-2xl" />
+          </div>
+          <button onClick={handleCalculate} className="w-full bg-[#FF7E33] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest flex items-center justify-center gap-3">
+            <Sun size={20}/> Singkap Weton
+          </button>
+        </section>
+      ) : (
+        <div className="space-y-10">
+          <div className="text-center space-y-4">
+             <div className="inline-block bg-gradient-to-br from-[#FF7E33] to-[#7F5AF0] px-10 py-6 rounded-[3rem] shadow-[0_0_50px_rgba(255,126,51,0.3)] border border-white/10">
+               <h3 className="text-4xl font-cinzel font-bold text-white uppercase tracking-widest">{reading.weton}</h3>
+               <div className="flex justify-center items-center gap-4 mt-4">
+                 <span className="text-[11px] font-bold uppercase text-white/80 bg-black/30 px-4 py-1.5 rounded-full">Neptu: {reading.neptu}</span>
+                 <span className="text-[11px] font-bold uppercase text-white/80 bg-black/30 px-4 py-1.5 rounded-full">{reading.warna}</span>
+               </div>
+             </div>
+             <p className="text-gray-400 font-poppins italic text-sm px-10">"{reading.makna_hari}"</p>
+          </div>
+
+          <div className="grid gap-6">
+            <div className="mystic-card p-10 rounded-[3.5rem] border-none text-white relative">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#FF7E33]"></div>
+              <h4 className="text-[9px] font-bold uppercase text-gray-600 tracking-widest mb-4">Watak Bawaan (Karakter)</h4>
+              <p className="text-gray-200 italic text-xl leading-relaxed">"{reading.watak}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#FFD700] flex items-center gap-2"><Star size={14}/> Keberuntungan</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.keberuntungan}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-3">
+                <h4 className="text-[9px] font-bold uppercase text-[#2CB67D] flex items-center gap-2"><Coins size={14}/> Rejeki 2026</h4>
+                <p className="text-[11px] text-gray-400 leading-relaxed">{reading.rejeki}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card p-10 rounded-[3.5rem] border-none space-y-8">
+               <div className="space-y-4">
+                 <h4 className="text-[10px] font-bold uppercase text-gray-600 tracking-widest flex items-center gap-2"><Briefcase size={16}/> Pekerjaan Cocok</h4>
+                 <p className="text-gray-200 text-sm leading-relaxed">{reading.pekerjaan}</p>
+               </div>
+               <div className="space-y-4">
+                 <h4 className="text-[10px] font-bold uppercase text-gray-600 tracking-widest flex items-center gap-2"><Store size={16}/> Bisnis 2026</h4>
+                 <p className="text-gray-200 text-sm leading-relaxed">{reading.bisnis}</p>
+               </div>
+               <div className="space-y-4">
+                 <h4 className="text-[10px] font-bold uppercase text-gray-600 tracking-widest flex items-center gap-2"><Users size={16}/> Jodoh Cocok</h4>
+                 <p className="text-gray-200 text-sm leading-relaxed">{reading.jodoh}</p>
+               </div>
+            </div>
+
+            <div className="mystic-card bg-[#FF7E33]/5 p-8 rounded-[3rem] border-none flex justify-between items-center">
+               <div className="space-y-1">
+                 <h4 className="text-[9px] font-bold uppercase text-gray-500">Hari Baik</h4>
+                 <p className="text-white font-bold">{reading.hari_baik}</p>
+               </div>
+               <div className="text-right space-y-1">
+                 <h4 className="text-[9px] font-bold uppercase text-gray-500">Warna Keberuntungan</h4>
+                 <p className="text-[#FF7E33] font-bold uppercase">{reading.warna}</p>
+               </div>
+            </div>
+
+            <div className="mystic-card bg-white/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-white text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Shield size={22} className="text-[#FF7E33]" /> Nasihat Bijak
+              </h4>
+              <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.saran}"</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-widest text-gray-600 hover:text-white transition-all">Coba Kala Lain</button>
+          <FloatingShareButton text={shareText} />
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+// --- NUMEROLOGY & OTHERS ---
 const NumerologyPage = () => {
   const { setIsLoading } = useAppContext();
   const [dob, setDob] = useState('');
   const [reading, setReading] = useState<any>(null);
   const [lifePath, setLifePath] = useState<number | null>(null);
+
   const handleCalculate = async () => {
     if (!dob) return;
     setIsLoading(true);
@@ -1440,54 +1688,69 @@ const NumerologyPage = () => {
     if (dbReading) setReading(dbReading);
     else {
       const result = await getNumerologyReading(sum, dob);
-      if (result) { setReading(result); await saveNumerologyToDB(dob, sum, result); }
+      if (result) { 
+        setReading(result); 
+        await saveNumerologyToDB(dob, sum, result); 
+      }
     }
     setIsLoading(false);
   };
-  const shareText = reading ? `Life Path-ku ${lifePath}. Saran: "${reading.saran}". Cek di Misteri+ 🔢` : "";
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
-      <header className="space-y-4 text-center"><h2 className="text-4xl font-cinzel font-bold text-white">Takdir <span className="text-[#2CB67D]">Numerik</span></h2></header>
-      {!reading ? (
-        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none"><input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#7F5AF0]/30 rounded-[2rem] py-7 px-8 text-[#A78BFA] text-center text-2xl" /><button onClick={handleCalculate} className="w-full bg-[#2CB67D] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest">Hitung Angka Takdir</button></section>
-      ) : (
-        <div className="space-y-12">
-          <div className="text-center"><span className="text-7xl font-cinzel font-bold text-white tracking-widest">{lifePath}</span><p className="text-xs uppercase text-gray-500">Life Path Number</p></div>
-          <div className="mystic-card p-12 rounded-[3.5rem] border-none"><h4 className="text-[10px] font-bold uppercase text-gray-600 mb-6">Kepribadian Utama</h4><p className="text-gray-200 italic text-xl text-white">"{reading.kepribadian}"</p></div>
-          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase text-gray-600">Hitung Ulang</button>
-          <FloatingShareButton text={shareText} />
-        </div>
-      )}
-    </motion.div>
-  );
-};
 
-const JavaHoroscopePage = () => {
-  const { setIsLoading } = useAppContext();
-  const [dob, setDob] = useState('');
-  const [reading, setReading] = useState<any>(null);
-  const handleCalculate = async () => {
-    if (!dob) return;
-    setIsLoading(true);
-    const dbReading = await fetchPrimbonFromDB(dob);
-    if (dbReading) setReading(dbReading);
-    else {
-      const result = await getPrimbonReading(dob);
-      if (result) { setReading(result); await savePrimbonToDB(dob, result.weton, result.neptu, result); }
-    }
-    setIsLoading(false);
-  };
-  const shareText = reading ? `Weton: ${reading.weton}. Watak: "${reading.watak}". Cek di Misteri+ ☀️` : "";
+  const shareText = reading ? `Life Path-ku ${lifePath}. Saran: "${reading.saran}". Cek di Misteri+ 🔢` : "";
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
-      <header className="space-y-4 text-center"><h2 className="text-4xl font-cinzel font-bold text-white">Primbon <span className="text-[#FF7E33]">Jawa</span></h2></header>
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold text-white">Takdir <span className="text-[#2CB67D]">Numerik</span></h2>
+        <p className="text-sm text-gray-500 font-poppins">Angka jalur hidup yang menuntun Anda di tahun 2026.</p>
+      </header>
+
       {!reading ? (
-        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none"><input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#7F5AF0]/30 rounded-[2rem] py-7 px-8 text-[#A78BFA] text-center text-2xl" /><button onClick={handleCalculate} className="w-full bg-[#FF7E33] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest">Singkap Weton</button></section>
+        <section className="mystic-card p-12 rounded-[4rem] space-y-10 border-none">
+          <div className="space-y-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 text-center block">Masukkan Tanggal Lahir</label>
+            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#0F0F1A] border border-[#7F5AF0]/30 rounded-[2rem] py-7 px-8 text-[#A78BFA] text-center text-2xl" />
+          </div>
+          <button onClick={handleCalculate} className="w-full bg-[#2CB67D] py-6 rounded-[2.5rem] font-bold text-white uppercase tracking-widest flex items-center justify-center gap-3">
+             <Activity size={20}/> Hitung Angka Takdir
+          </button>
+        </section>
       ) : (
         <div className="space-y-12">
-          <div className="text-center"><span className="text-4xl font-cinzel font-bold text-white tracking-widest">{reading.weton}</span><p className="text-xs uppercase text-gray-500">Neptu: {reading.neptu}</p></div>
-          <div className="mystic-card p-12 rounded-[3.5rem] border-none text-white"><h4 className="text-[10px] font-bold uppercase text-gray-600 mb-6">Watak Bawaan</h4><p className="text-gray-200 italic text-xl">"{reading.watak}"</p></div>
-          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase text-gray-600">Coba Kala Lain</button>
+          <div className="text-center">
+            <span className="text-7xl font-cinzel font-bold text-white tracking-widest drop-shadow-[0_0_20px_rgba(44,182,125,0.4)]">{lifePath}</span>
+            <p className="text-xs uppercase text-gray-500 mt-2 tracking-widest font-bold">Life Path Number</p>
+          </div>
+
+          <div className="grid gap-6">
+            <div className="mystic-card p-12 rounded-[3.5rem] border-none text-white relative">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#2CB67D]"></div>
+              <h4 className="text-[10px] font-bold uppercase text-gray-600 mb-6 tracking-widest">Kepribadian Utama</h4>
+              <p className="text-gray-200 italic text-xl leading-relaxed">"{reading.kepribadian}"</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-4">
+                <h4 className="text-[9px] font-bold uppercase text-[#2CB67D] flex items-center gap-2"><Briefcase size={14}/> Karir</h4>
+                <p className="text-[12px] text-gray-400 leading-relaxed">{reading.karir}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] border-none space-y-4">
+                <h4 className="text-[9px] font-bold uppercase text-[#F472B6] flex items-center gap-2"><Heart size={14}/> Asmara</h4>
+                <p className="text-[12px] text-gray-400 leading-relaxed">{reading.asmara}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card bg-[#2CB67D]/5 p-12 rounded-[4rem] border-none shadow-2xl space-y-6">
+               <h4 className="text-white text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-3"><Zap size={20} className="text-[#2CB67D]"/> Saran Semesta</h4>
+               <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.saran}"</p>
+               <div className="pt-4 border-t border-white/5">
+                 <p className="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Batu Permata Keberuntungan</p>
+                 <p className="text-[#2CB67D] font-bold">{reading.batu_permata}</p>
+               </div>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setDob(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase text-gray-600 hover:text-white transition-all tracking-[0.4em]">Hitung Ulang Numerik</button>
           <FloatingShareButton text={shareText} />
         </div>
       )}
