@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { 
@@ -47,7 +48,8 @@ export enum Page {
   CHINESE_ZODIAC = 'chinese_zodiac',
   SUNDANESE_PRIMBON = 'sundanese_primbon',
   COMMENT = 'comment',
-  TAROT = 'tarot'
+  TAROT = 'tarot',
+  COMPATIBILITY = 'compatibility'
 }
 
 export interface Dream {
@@ -283,6 +285,29 @@ const saveTarotToDB = async (question: string, cardName: string, reading: any) =
     });
   } catch (e) {
     console.error("Network error saat simpan Tarot:", e);
+  }
+};
+
+const fetchCompatibilityFromDB = async (name1: string, dob1: string, name2: string, dob2: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/get-compatibility.php?n1=${encodeURIComponent(name1)}&d1=${dob1}&n2=${encodeURIComponent(name2)}&d2=${dob2}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.status === 'success' ? data.data : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const saveCompatibilityToDB = async (name1: string, dob1: string, name2: string, dob2: string, score: number, reading: any) => {
+  try {
+    await fetch(`${API_BASE_URL}/save-compatibility.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name1, dob1, name2, dob2, score, content: reading })
+    });
+  } catch (e) {
+    console.error("Network error saat simpan kecocokan:", e);
   }
 };
 
@@ -538,6 +563,40 @@ const getTarotReading = async (cardName: string, question: string) => {
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Tarot AI Error:", error);
+    return null;
+  }
+};
+
+const getPartnerCompatibility = async (n1: string, d1: string, n2: string, d2: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Berikan analisis kecocokan pasangan untuk:
+      Orang 1: ${n1} (Lahir: ${d1})
+      Orang 2: ${n2} (Lahir: ${d2})
+      Berikan analisis jujur and mendalam untuk tahun 2026 berdasarkan Zodiak, Weton, Numerologi, and Paririmbon. 
+      Hitung skor persentase (%) kecocokan yang logis (bisa rendah, bisa tinggi).
+      Bahasa: Indonesia. Nuansa: Bijak, Spiritual, Realistis.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            skor: { type: Type.NUMBER },
+            sebutan: { type: Type.STRING, description: "Misal: Pasangan Takdir, Tantangan Jiwa, dll" },
+            dinamika_elemen: { type: Type.STRING },
+            kelebihan: { type: Type.STRING },
+            tantangan: { type: Type.STRING },
+            saran: { type: Type.STRING },
+            analisis_2026: { type: Type.STRING }
+          },
+          required: ["skor", "sebutan", "dinamika_elemen", "kelebihan", "tantangan", "saran", "analisis_2026"]
+        }
+      }
+    });
+    return JSON.parse(response.text || '{}');
+  } catch (error) {
+    console.error("Compatibility AI Error:", error);
     return null;
   }
 };
@@ -1075,6 +1134,152 @@ const TarotPage = () => {
   );
 };
 
+const CompatibilityPage = () => {
+  const { setIsLoading } = useAppContext();
+  const [name1, setName1] = useState('');
+  const [dob1, setDob1] = useState('');
+  const [name2, setName2] = useState('');
+  const [dob2, setDob2] = useState('');
+  const [reading, setReading] = useState<any>(null);
+
+  const handleCalculate = async () => {
+    if (!name1 || !dob1 || !name2 || !dob2) return;
+    setIsLoading(true);
+    
+    const dbReading = await fetchCompatibilityFromDB(name1, dob1, name2, dob2);
+    if (dbReading) {
+      setReading(dbReading);
+    } else {
+      const result = await getPartnerCompatibility(name1, dob1, name2, dob2);
+      if (result) {
+        setReading(result);
+        await saveCompatibilityToDB(name1, dob1, name2, dob2, result.skor, result);
+      }
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6 space-y-12">
+      <header className="space-y-4 text-center">
+        <h2 className="text-4xl font-cinzel font-bold leading-tight text-white">Harmoni <span className="text-[#F472B6] drop-shadow-[0_0_10px_rgba(244,114,182,0.4)]">Jiwa</span></h2>
+        <p className="text-sm text-gray-500 font-poppins px-6">Analisis kejujuran kecocokan pasangan berdasarkan garis semesta untuk tahun 2026.</p>
+      </header>
+
+      {!reading ? (
+        <section className="space-y-8">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Person 1 */}
+            <div className="mystic-card p-8 rounded-[3rem] border-none shadow-2xl space-y-6 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-5"><User size={80}/></div>
+               <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#F472B6]">Sisi Pertama</h4>
+               <div className="space-y-4">
+                  <input 
+                    type="text" 
+                    value={name1}
+                    onChange={(e) => setName1(e.target.value)}
+                    placeholder="Nama Kamu"
+                    className="w-full oracle-input rounded-2xl py-4 px-6 text-white text-sm focus:outline-none placeholder:text-gray-700"
+                  />
+                  <input 
+                    type="date" 
+                    value={dob1}
+                    onChange={(e) => setDob1(e.target.value)}
+                    className="w-full oracle-input rounded-2xl py-4 px-6 text-[#F472B6] focus:outline-none text-sm"
+                  />
+               </div>
+            </div>
+
+            <div className="flex justify-center -my-3 relative z-10">
+               <div className="bg-[#1A1A2E] p-3 rounded-full border border-white/5 shadow-xl">
+                 <Heart size={24} className="text-[#F472B6] fill-[#F472B6]/20 animate-pulse" />
+               </div>
+            </div>
+
+            {/* Person 2 */}
+            <div className="mystic-card p-8 rounded-[3rem] border-none shadow-2xl space-y-6 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-5"><Users size={80}/></div>
+               <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-500">Sisi Pasangan</h4>
+               <div className="space-y-4">
+                  <input 
+                    type="text" 
+                    value={name2}
+                    onChange={(e) => setName2(e.target.value)}
+                    placeholder="Nama Pasangan"
+                    className="w-full oracle-input rounded-2xl py-4 px-6 text-white text-sm focus:outline-none placeholder:text-gray-700"
+                  />
+                  <input 
+                    type="date" 
+                    value={dob2}
+                    onChange={(e) => setDob2(e.target.value)}
+                    className="w-full oracle-input rounded-2xl py-4 px-6 text-gray-400 focus:outline-none text-sm"
+                  />
+               </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleCalculate}
+            disabled={!name1 || !dob1 || !name2 || !dob2}
+            className="w-full bg-gradient-to-r from-[#F472B6] to-[#DB2777] py-6 rounded-[2.5rem] font-bold text-white shadow-xl shadow-[#F472B6]/20 transition-all uppercase tracking-[0.3em] text-xs active:scale-95 flex items-center justify-center gap-4"
+          >
+            <Sparkles size={20} /> Cek Kecocokan
+          </button>
+        </section>
+      ) : (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+          <div className="text-center space-y-8">
+            <div className="relative inline-block">
+               <div className="absolute inset-0 bg-[#F472B6] blur-[100px] opacity-25 animate-pulse"></div>
+               <div className="relative w-48 h-48 bg-gradient-to-br from-[#F472B6] to-[#1A1A2E] rounded-full flex flex-col items-center justify-center border-4 border-[#F472B6]/30 shadow-2xl">
+                 <span className="text-5xl font-cinzel font-bold text-white tracking-widest glow-text">{reading.skor}%</span>
+                 <span className="text-[10px] text-white/90 font-bold uppercase tracking-[0.2em] mt-2">Kecocokan</span>
+               </div>
+            </div>
+            <h3 className="text-2xl font-cinzel font-bold text-white uppercase tracking-[0.2em]">{reading.sebutan}</h3>
+          </div>
+
+          <div className="grid gap-8">
+            <div className="mystic-card p-10 rounded-[3.5rem] relative border-none">
+              <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-[#F472B6] to-transparent rounded-full"></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 mb-6">Dinamika Elemen</h4>
+              <p className="text-gray-200 leading-relaxed font-poppins italic text-lg text-white">"{reading.dinamika_elemen}"</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5">
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none bg-green-500/5">
+                <h4 className="text-[10px] font-bold uppercase text-[#2CB67D] tracking-[0.3em] flex items-center gap-3"><Sparkles size={18}/> Kelebihan</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.kelebihan}</p>
+              </div>
+              <div className="mystic-card p-8 rounded-[3rem] space-y-4 border-none bg-red-500/5">
+                <h4 className="text-[10px] font-bold uppercase text-[#E53E3E] tracking-[0.3em] flex items-center gap-3"><X size={18}/> Tantangan</h4>
+                <p className="text-[13px] text-gray-300 leading-relaxed font-poppins">{reading.tantangan}</p>
+              </div>
+            </div>
+
+            <div className="mystic-card bg-[#F472B6]/5 p-12 rounded-[4rem] space-y-6 border-none shadow-2xl">
+              <h4 className="text-[#F472B6] text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Moon size={22} /> Prediksi 2026
+              </h4>
+              <p className="text-lg text-gray-200 font-poppins leading-relaxed">"{reading.analisis_2026}"</p>
+            </div>
+
+            <div className="mystic-card bg-white/5 p-12 rounded-[4rem] space-y-6 border-none">
+              <h4 className="text-white text-xs font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                <Star size={22} className="text-yellow-500" /> Saran Hubungan
+              </h4>
+              <p className="text-xl text-gray-200 font-poppins leading-relaxed italic">"{reading.saran}"</p>
+            </div>
+          </div>
+
+          <button onClick={() => { setReading(null); setName1(''); setName2(''); }} className="w-full bg-white/5 py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-[0.4em] text-gray-600 hover:text-white transition-all">Coba Pasangan Lain</button>
+        </motion.div>
+      )}
+      <AdBanner type="banner" />
+    </motion.div>
+  );
+};
+
 const HomePage = () => {
   const { setCurrentPage, setSelectedDream, setShowInterstitial, setIsLoading, trendingDreams, refreshTrending, latestComments } = useAppContext();
   const [searchInput, setSearchInput] = useState('');
@@ -1146,10 +1351,11 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Grid Kategori Beranda - Update ke 7 Item */}
-      <section className="grid grid-cols-3 gap-3 px-1">
+      {/* Grid Kategori Beranda - Update ke 8 Item dengan COMPATIBILITY di urutan ke-2 */}
+      <section className="grid grid-cols-4 gap-3 px-1">
         {[
           { label: 'Tafsir', id: Page.HOME, icon: <Moon size={16} />, color: '#7F5AF0' }, 
+          { label: 'Jodoh', id: Page.COMPATIBILITY, icon: <Heart size={16} />, color: '#F472B6' }, 
           { label: 'Zodiak', id: Page.ZODIAC, icon: <Sparkles size={16} />, color: '#FFD700' }, 
           { label: 'Numerik', id: Page.NUMEROLOGY, icon: <Zap size={16} />, color: '#2CB67D' }, 
           { label: 'Tarot', id: Page.TAROT, icon: <Compass size={16} />, color: '#A78BFA' },
@@ -1213,7 +1419,7 @@ const HomePage = () => {
               className="flex-shrink-0 w-56 mystic-card p-6 rounded-[2.5rem] space-y-5 cursor-pointer relative group snap-center border-none"
             >
               <div className="absolute -top-4 -right-4 p-3 opacity-5 group-hover:opacity-15 transition-opacity duration-500">
-                <Moon size={100} />
+                < Moon size={100} />
               </div>
               <div className="w-12 h-12 bg-[#7F5AF0]/10 rounded-2xl flex items-center justify-center text-[#7F5AF0] shadow-inner">
                 <Sparkles size={22} />
@@ -1812,6 +2018,7 @@ const AppContent = () => {
       case Page.SUNDANESE_PRIMBON: return <SundanesePrimbonPage />;
       case Page.COMMENT: return <CommentPage />;
       case Page.TAROT: return <TarotPage />;
+      case Page.COMPATIBILITY: return <CompatibilityPage />;
       case Page.TRENDING: return (
         <div className="py-6 space-y-12">
           <header className="space-y-4 text-center">
